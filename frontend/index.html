@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lookout · Family dashboard</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 20px; }
+  .brand { font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+  .brand span { color: var(--accent); }
+  .who { color: var(--muted); }
+  header .spacer { flex: 1; }
+  a.btn, button.btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); text-decoration: none; cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.danger { color: var(--hold); }
+  .btn:disabled { opacity: .5; cursor: progress; }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .col { display: grid; gap: 16px; min-width: 0; grid-template-columns: minmax(0, 1fr); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  /* Status */
+  .status { display: grid; gap: 14px; }
+  .tier { display: inline-flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; padding: 10px 16px; border-radius: 10px; width: fit-content; }
+  .tier::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: currentColor; }
+  .tier.log { color: var(--log); background: var(--log-bg); }
+  .tier.check_in { color: var(--check); background: var(--check-bg); }
+  .tier.alert { color: var(--alert); background: var(--alert-bg); }
+  .tier.recommend_hold { color: var(--hold); background: var(--hold-bg); }
+  .metrics { display: flex; flex-wrap: wrap; gap: 8px 28px; }
+  .metric .k { font-size: 12px; color: var(--muted); }
+  .metric .v { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .meter { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; width: 160px; margin-top: 6px; }
+  .meter > i { display: block; height: 100%; background: currentColor; }
+  .summary { font-size: 16px; }
+  .reasoning { font-size: 14px; color: var(--muted); border-left: 3px solid var(--border); padding-left: 12px; }
+
+  /* Approval */
+  .approval { border: 2px solid var(--hold); background: var(--hold-bg); }
+  .approval h2 { color: var(--hold); }
+  .approval .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .approval input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); min-width: 0; flex: 1 1 160px; }
+  .note { padding: 12px 14px; border-radius: 10px; background: var(--surface-2); font-size: 14px; }
+  .note.ok { background: var(--ok-bg); color: var(--ok); }
+  .note.bad { background: var(--hold-bg); color: var(--hold); }
+
+  /* Evidence */
+  .signals { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .signal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, max-content); gap: 4px 12px; align-items: center; }
+  .signal .w { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; overflow-wrap: anywhere; }
+  .signal .bar { grid-column: 1 / -1; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+  .signal .bar i { display: block; height: 100%; background: var(--alert); }
+  .events { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .events td { padding: 8px 6px; border-top: 1px solid var(--border); vertical-align: top; }
+  .events tr.flag td { background: var(--alert-bg); }
+  .events tr.flag td:first-child { box-shadow: inset 3px 0 0 var(--alert); }
+  .events .amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tablewrap { overflow-x: auto; }
+  .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+
+  /* Side column */
+  dl.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0 0 12px; font-size: 14px; }
+  dl.kv dt { color: var(--muted); }
+  dl.kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.on { background: var(--check-bg); color: var(--check); }
+  .pill.off { background: var(--ok-bg); color: var(--ok); }
+  .sim { border-style: dashed; }
+  .sim select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 10px; }
+  .sim .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .sim label { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+  .audit { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 13px; max-height: 340px; overflow-y: auto; }
+  .audit li { display: grid; grid-template-columns: 64px 1fr; gap: 8px; }
+  .audit time { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .audit b { font-weight: 600; }
+  .history { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+  .history li { display: flex; justify-content: space-between; gap: 8px; }
+  .empty { color: var(--muted); font-size: 14px; }
+  .error { color: var(--hold); font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Look<span>out</span></div>
+    <div class="who" id="who">Watching over Mom</div>
+    <div class="spacer"></div>
+    <a class="btn" href="mom.html" target="_blank" rel="noopener">Open Mom's screen ↗</a>
+  </header>
+
+  <div class="grid">
+    <main class="col">
+      <section class="card status" id="status">
+        <h2>Right now</h2>
+        <div class="empty">No assessment yet. Use the simulation panel to inject a scenario, then assess.</div>
+      </section>
+
+      <section class="card approval" id="approval" hidden>
+        <h2>Your approval is needed</h2>
+        <p style="margin:0">Lookout recommends pausing outgoing payments on Mom's account. <strong>Lookout never moves money or places holds itself.</strong> If you approve, call her bank's fraud line (the number on the back of her card) and ask them to pause outgoing payments.</p>
+        <div class="row">
+          <input id="reviewer" placeholder="Your name" value="daughter" aria-label="Your name">
+          <button class="btn primary" id="approveBtn">Approve hold</button>
+          <button class="btn danger" id="rejectBtn">Reject, it's fine</button>
+        </div>
+        <div class="error" id="approvalError" hidden></div>
+      </section>
+
+      <section class="card" id="momAnswer" hidden>
+        <h2>Mom's answer</h2>
+        <div id="momAnswerBody"></div>
+      </section>
+
+      <section class="card">
+        <h2>Evidence</h2>
+        <ul class="signals" id="signals"><li class="empty">No signals.</li></ul>
+      </section>
+
+      <section class="card">
+        <h2>Recent activity <span class="muted small" style="text-transform:none;letter-spacing:0">(last 72 hours, flagged rows highlighted)</span></h2>
+        <div class="tablewrap"><table class="events" id="events"><tbody><tr><td class="empty">No events.</td></tr></tbody></table></div>
+      </section>
+    </main>
+
+    <aside class="col">
+      <section class="card">
+        <h2>Mom's credit file (CRS)</h2>
+        <div id="baseline"><div class="empty">No baseline yet.</div></div>
+        <button class="btn" id="baselineBtn">Pull from CRS sandbox (P20)</button>
+        <div class="error" id="baselineError" hidden></div>
+      </section>
+
+      <section class="card sim">
+        <h2>Simulation (demo only)</h2>
+        <p class="small muted" style="margin-top:0">Injected events are labeled <code>injector</code>. Real data: the CRS baseline above.</p>
+        <select id="scenario" aria-label="Scenario"></select>
+        <div class="row">
+          <button class="btn" id="injectBtn">Inject</button>
+          <button class="btn primary" id="assessBtn">Assess</button>
+          <label><input type="checkbox" id="useLlm" checked> Claude</label>
+          <button class="btn" id="resetBtn" title="Clear events and decisions; keeps the audit log">Reset</button>
+        </div>
+        <div class="error" id="simError" hidden></div>
+      </section>
+
+      <section class="card">
+        <h2>Decisions</h2>
+        <ul class="history" id="history"><li class="empty">None yet.</li></ul>
+      </section>
+
+      <section class="card">
+        <h2>Audit log</h2>
+        <ul class="audit" id="audit"><li class="empty">Empty.</li></ul>
+      </section>
+    </aside>
+  </div>
+</div>
+<script src="dashboard.js"></script>
+</body>
+</html>

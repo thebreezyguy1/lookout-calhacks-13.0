@@ -1,10 +1,12 @@
 """Lookout API. Read-only toward the person's money: nothing here moves funds."""
 
 from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.agent.baseline import build_baseline
@@ -13,9 +15,11 @@ from app.agent.risk import assess
 from app.config import settings
 from app.integrations.crs import CRSClient, CRSError, load_personas
 from app.integrations.nessie_events import fetch_events
-from app.models import Baseline, Decision, Event, EventKind, EventSource
+from app.models import Baseline, Decision, Event, EventKind, EventSource, ParentAnswer, Tier
 from app.scenarios import load_scenario, load_scenarios, to_events
 from app.store import store
+
+FRONTEND_DIR = Path(__file__).resolve().parents[2] / "frontend"
 
 app = FastAPI(
     title="Lookout",
@@ -27,7 +31,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 @app.get("/", include_in_schema=False)
 def root() -> RedirectResponse:
-    return RedirectResponse("/docs")
+    return RedirectResponse("/app/")
 
 
 @app.get("/health")
@@ -174,6 +178,44 @@ def review(decision_id: str, body: Review) -> Decision:
     return decision
 
 
+# ---------- Parent check-in ----------
+
+@app.get("/people/{person_id}/check-in")
+def pending_check_in(person_id: str) -> dict | None:
+    """The newest decision the parent hasn't answered yet, in plain words. None if all is well."""
+    pending = [d for d in list_decisions(person_id)
+               if d.tier is not Tier.LOG and d.parent_response is None]
+    if not pending:
+        return None
+    d = pending[0]
+    by_id = {e.id: e for e in store.events.get(person_id, [])}
+    events = sorted((by_id[i] for i in d.assessment.event_ids if i in by_id), key=lambda e: e.occurred_at)
+    return {
+        "decision_id": d.id,
+        "message": d.assessment.parent_message,
+        "events": [{"when": e.occurred_at, "kind": e.kind.value, "amount": e.amount,
+                    "where": e.merchant or e.counterparty, "description": e.description}
+                   for e in events],
+    }
+
+
+class ParentResponseIn(BaseModel):
+    answer: ParentAnswer
+
+
+@app.post("/decisions/{decision_id}/parent-response", response_model=Decision)
+def parent_response(decision_id: str, body: ParentResponseIn) -> Decision:
+    """The parent answers a check-in. Recorded for the family; it changes no tier on its own."""
+    decision = store.decisions.get(decision_id)
+    if not decision:
+        raise HTTPException(404, "Unknown decision")
+    decision.parent_response = body.answer
+    decision.parent_responded_at = datetime.now(timezone.utc)
+    store.log(decision.assessment.person_id, "parent_responded", decision_id=decision_id,
+              answer=body.answer.value)
+    return decision
+
+
 @app.get("/people/{person_id}/audit")
 def audit(person_id: str) -> list[dict]:
     return [r.model_dump(mode="json") for r in store.audit if r.person_id == person_id]
@@ -184,3 +226,9 @@ def reset(person_id: str) -> dict[str, str]:
     """Clear a person's events and decisions (demo reset). Keeps the audit log."""
     store.reset(person_id)
     return {"status": "reset"}
+
+
+# ---------- Frontend (family dashboard and parent check-in) ----------
+
+if FRONTEND_DIR.is_dir():
+    app.mount("/app", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

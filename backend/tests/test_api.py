@@ -54,3 +54,33 @@ def test_reset_keeps_baseline() -> None:
     client.post("/people/mom/reset")
     assert client.get("/people/mom/events").json() == []
     assert client.get("/people/mom/baseline").status_code == 200
+
+
+def test_parent_check_in_flow() -> None:
+    assert client.get("/people/mom/check-in").json() is None
+
+    client.post("/people/mom/inject/scam-grandparent-bail")
+    decision = client.post("/people/mom/assess", params={"use_llm": False}).json()
+    assert decision["assessment"]["signals"]  # evidence for the dashboard
+
+    check_in = client.get("/people/mom/check-in").json()
+    assert check_in["decision_id"] == decision["id"]
+    assert len(check_in["events"]) == 3 and check_in["message"]
+
+    answered = client.post(f"/decisions/{decision['id']}/parent-response",
+                           json={"answer": "someone_asked"}).json()
+    assert answered["parent_response"] == "someone_asked"
+    assert answered["tier"] == decision["tier"]  # an answer never changes the tier by itself
+    assert client.get("/people/mom/check-in").json() is None
+    assert client.get("/people/mom/audit").json()[-1]["action"] == "parent_responded"
+
+
+def test_quiet_window_never_asks_the_parent() -> None:
+    client.post("/people/mom/inject/normal-weekly-errands")
+    client.post("/people/mom/assess", params={"use_llm": False})
+    assert client.get("/people/mom/check-in").json() is None
+
+
+def test_frontend_is_served() -> None:
+    assert "Family dashboard" in client.get("/app/").text
+    assert "Someone asked me to do this" in client.get("/app/mom.html").text

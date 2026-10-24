@@ -34,6 +34,7 @@ def assess(person_id: str, window: list[Event], baseline: Baseline | None = None
         confidence=rules_confidence(hits),
         pattern=guess_pattern(hits),
         rule_hits=[h.rule for h in hits],
+        signals=hits,
         reasoning=_rules_summary(hits),
         family_summary=_rules_summary(hits),
         parent_message=(

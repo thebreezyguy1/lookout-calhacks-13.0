@@ -39,7 +39,7 @@ Credit monitoring works by pulling the parent's CRS credit report on a schedule 
 | `backend/` | FastAPI service: integrations, risk engine, action policy, audit log |
 | `backend/app/integrations/` | Thin clients for Nessie and the CRS sandbox |
 | `backend/app/agent/` | Risk engine and action policy |
-| `frontend/` | Family dashboard and parent check-in view (to be scaffolded) |
+| `frontend/` | Family dashboard and parent check-in view (static, served at `/app`) |
 | `evals/` | Labeled scam / normal-behavior scenarios and the eval runner |
 | `docs/` | Architecture notes and prize-track checklist |
 
@@ -56,7 +56,7 @@ pytest
 
 ## Demo flow (API)
 
-With the server running, open http://localhost:8000/docs, or:
+With the server running, open the family dashboard at http://localhost:8000/app/ and Mom's check-in screen at http://localhost:8000/app/mom.html side by side. The API docs are at http://localhost:8000/docs. Or use curl:
 
 ```bash
 # 1. Real CRS data: build Mom's baseline from persona P20 (Dolores Whitcomb)

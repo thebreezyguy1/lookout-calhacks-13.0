@@ -88,6 +88,7 @@ class Assessment(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     pattern: str | None = None  # e.g. "grandparent_emergency"
     rule_hits: list[str] = Field(default_factory=list)
+    signals: list[RuleHit] = Field(default_factory=list)  # full rule evidence, for the dashboard
     reasoning: str = ""
     family_summary: str = ""    # plain-language explanation for the trusted contact
     parent_message: str = ""    # gentle check-in text for the parent
@@ -103,4 +104,17 @@ class Decision(BaseModel):
     requires_approval: bool
     approved: bool | None = None
     reviewed_by: str | None = None
+    parent_response: "ParentAnswer | None" = None
+    parent_responded_at: datetime | None = None
     created_at: datetime = Field(default_factory=_now)
+
+
+class ParentAnswer(str, Enum):
+    """The parent's answer to a check-in. Input to the family, never an action by itself."""
+
+    WAS_ME = "was_me"
+    NOT_ME = "not_me"
+    SOMEONE_ASKED = "someone_asked"
+
+
+Decision.model_rebuild()

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lookout · Check-in</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Designed for an older adult: very large type, high contrast, one thing at a time. */
+  body { font-size: 24px; line-height: 1.5; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
+  .brand { font-size: 22px; font-weight: 700; color: var(--muted); margin-bottom: 28px; }
+  .brand span { color: var(--accent); }
+  h1 { font-size: 40px; line-height: 1.2; margin: 0 0 20px; letter-spacing: -0.01em; }
+  p { margin: 0 0 20px; }
+  .card { background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 28px; }
+  .events { list-style: none; margin: 0 0 28px; padding: 0; display: grid; gap: 14px; }
+  .events li { background: var(--surface-2); border-radius: 12px; padding: 16px 20px; }
+  .events .what { font-weight: 700; font-size: 28px; }
+  .events .when { color: var(--muted); font-size: 20px; }
+  .choices { display: grid; gap: 16px; }
+  .choices button {
+    width: 100%; min-height: 84px; padding: 18px 24px; border-radius: 14px; font-size: 28px; font-weight: 700;
+    text-align: left; cursor: pointer; border: 3px solid var(--border); background: var(--surface);
+  }
+  .choices button:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+  .choices .yes { border-color: var(--ok); color: var(--ok); }
+  .choices .no { border-color: var(--alert); color: var(--alert); }
+  .choices .asked { border-color: var(--hold); color: var(--hold); }
+  .choices button:disabled { opacity: .5; }
+  .calm { text-align: center; padding: 48px 28px; }
+  .calm .mark { width: 96px; height: 96px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center; margin: 0 auto 24px; font-size: 56px; font-weight: 700; }
+  .safety { margin-top: 28px; font-size: 20px; color: var(--muted); }
+  .error { color: var(--hold); font-size: 20px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Look<span>out</span></div>
+
+  <section id="allWell" class="card calm" hidden>
+    <div class="mark" aria-hidden="true">✓</div>
+    <h1>All is well</h1>
+    <p>Nothing needs your attention right now.</p>
+  </section>
+
+  <section id="ask" class="card" hidden>
+    <h1>Can you help us check something?</h1>
+    <p id="message"></p>
+    <ul class="events" id="events"></ul>
+    <div class="choices">
+      <button class="yes" data-answer="was_me">Yes, that was me</button>
+      <button class="no" data-answer="not_me">No, that wasn't me</button>
+      <button class="asked" data-answer="someone_asked">Someone asked me to do this</button>
+    </div>
+    <div class="error" id="error" hidden></div>
+  </section>
+
+  <section id="thanks" class="card" hidden>
+    <h1 id="thanksTitle"></h1>
+    <p id="thanksBody"></p>
+  </section>
+
+  <p class="safety">Lookout will never ask for your passwords, codes or account numbers, and it never moves your money.</p>
+</div>
+<script src="mom.js"></script>
+</body>
+</html>
