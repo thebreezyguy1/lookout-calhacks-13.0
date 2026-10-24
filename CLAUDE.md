@@ -12,7 +12,10 @@ An agent that watches an aging parent's bank activity (Nessie) and credit file (
 2. **Every action goes through the action policy** in `backend/app/agent/policy.py`. Nothing sends an alert or recommends a hold directly.
 3. **`RECOMMEND_HOLD` always requires human approval.** No auto-approval path, not even in demo mode.
 4. **Every decision writes an audit record**: observed events, rule hits, LLM reasoning summary, confidence, chosen tier.
-5. **Sandbox data only.** Use CRS-provided test identities and Nessie mock customers. Never put real names, SSNs or account numbers in code, fixtures, logs or prompts.
+5. **Sandbox data only.** For CRS, send only the exact persona bodies in `backend/fixtures/crs_personas.json` (P01–P20); a body that doesn't match a persona goes to the real vendor and can be billed. Use Nessie mock customers. Never put real names, SSNs or account numbers in code, fixtures, logs or prompts.
+   - Our protected "parent" is **P20 Dolores Whitcomb** (74, retiree, stale file, no active accounts).
+   - CRS reference (schemas, personas, error codes): the CRS MCP server, `npx -y @crscreditapi/crs-calhacks-mcp-server@latest`.
+   - CRS returns HTTP 200 for errors; always check `errorMessages` (the client raises `CRSError`).
 6. **No secrets in the repo.** Keys come from environment variables via `backend/app/config.py`. `.env` is gitignored.
 7. **LLM output is structured.** The model returns JSON validated against Pydantic models; if validation fails, fall back to the rules-only result and log it.
 
