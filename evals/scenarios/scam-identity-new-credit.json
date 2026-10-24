@@ -1,0 +1,75 @@
+{
+  "id": "scam-identity-new-credit",
+  "label": "scam",
+  "pattern": "identity_theft",
+  "expected_min_tier": "alert",
+  "notes": "Someone applies for credit in her name; inquiry then a new card on a file dormant for years.",
+  "events": [
+    {
+      "kind": "credit_inquiry",
+      "offset_minutes": 0,
+      "counterparty": "CAPITAL BANK CARD SERVICES",
+      "category": "Banking",
+      "description": "New hard inquiry"
+    },
+    {
+      "kind": "new_credit_account",
+      "offset_minutes": 1440,
+      "amount": 5000,
+      "counterparty": "CAPITAL BANK CARD SERVICES",
+      "category": "Revolving",
+      "description": "New account opened"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 4,
+      "amount": 64.2,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 6,
+      "amount": 22.5,
+      "merchant": "CVS Pharmacy",
+      "description": "Pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 9,
+      "amount": 58.1,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 12,
+      "amount": 120.0,
+      "counterparty": "SoCal Edison",
+      "description": "Electric bill"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 15,
+      "amount": 35.0,
+      "merchant": "Ocean View Salon",
+      "description": "Haircut"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 20,
+      "amount": 71.4,
+      "merchant": "Trader Joe's",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 25,
+      "amount": 950.0,
+      "counterparty": "Mesa Gardens HOA",
+      "description": "HOA dues"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "id": "normal-birthday-gift-card",
+  "label": "normal",
+  "notes": "A $50 gift card for a grandchild's birthday. Must not alarm.",
+  "events": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 0,
+      "amount": 50,
+      "merchant": "Target",
+      "description": "Gift card - Emma's birthday"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 10,
+      "amount": 12.99,
+      "merchant": "Target",
+      "description": "Birthday card and wrapping"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 4,
+      "amount": 64.2,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 6,
+      "amount": 22.5,
+      "merchant": "CVS Pharmacy",
+      "description": "Pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 9,
+      "amount": 58.1,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 12,
+      "amount": 120.0,
+      "counterparty": "SoCal Edison",
+      "description": "Electric bill"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 15,
+      "amount": 35.0,
+      "merchant": "Ocean View Salon",
+      "description": "Haircut"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 20,
+      "amount": 71.4,
+      "merchant": "Trader Joe's",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 25,
+      "amount": 950.0,
+      "counterparty": "Mesa Gardens HOA",
+      "description": "HOA dues"
+    }
+  ]
+}

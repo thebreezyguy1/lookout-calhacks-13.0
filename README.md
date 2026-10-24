@@ -54,6 +54,36 @@ uvicorn app.main:app --reload # http://localhost:8000/health
 pytest
 ```
 
+## Demo flow (API)
+
+With the server running, open http://localhost:8000/docs, or:
+
+```bash
+# 1. Real CRS data: build Mom's baseline from persona P20 (Dolores Whitcomb)
+curl -X POST "localhost:8000/people/mom/baseline?persona=P20"
+# 2. Simulate a scam (events are labeled source=injector)
+curl -X POST localhost:8000/people/mom/inject/scam-grandparent-bail
+# 3. Assess: rules + Claude, then the action policy picks a tier
+curl -X POST localhost:8000/people/mom/assess
+# 4. A family member approves or rejects a recommended hold
+curl -X POST localhost:8000/decisions/<decision_id>/review \
+     -H 'Content-Type: application/json' -d '{"approve": true, "reviewer": "daughter"}'
+# 5. Audit trail
+curl localhost:8000/people/mom/audit
+```
+
+**What's real vs. simulated:** the baseline comes from live CRS sandbox calls (credit report + Fraud Finder). CRS personas never change, so new suspicious activity comes from the scenario injector, and every injected event is labeled as such.
+
+## Evals
+
+```bash
+cd backend
+python -m scripts.run_evals          # rules only, offline
+python -m scripts.run_evals --llm    # rules + Claude
+```
+
+Reports detection rate, false-alarm rate, normal check-in rate and median time-to-detect over the labeled scenarios in `evals/scenarios/`.
+
 ## Responsible design
 
 - **Consent and dignity:** the parent opts in and can see every signal, alert and decision.

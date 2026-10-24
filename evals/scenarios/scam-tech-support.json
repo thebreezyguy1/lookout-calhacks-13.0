@@ -1,0 +1,74 @@
+{
+  "id": "scam-tech-support",
+  "label": "scam",
+  "pattern": "tech_support_scam",
+  "expected_min_tier": "alert",
+  "notes": "Pop-up says her computer is infected; 'Microsoft support' takes remote access, then asks for gift cards.",
+  "events": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 0,
+      "amount": 299,
+      "merchant": "AnyDesk Premium Support",
+      "description": "Microsoft support fee"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 90,
+      "amount": 400,
+      "merchant": "Walmart",
+      "description": "Steam card"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 4,
+      "amount": 64.2,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 6,
+      "amount": 22.5,
+      "merchant": "CVS Pharmacy",
+      "description": "Pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 9,
+      "amount": 58.1,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 12,
+      "amount": 120.0,
+      "counterparty": "SoCal Edison",
+      "description": "Electric bill"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 15,
+      "amount": 35.0,
+      "merchant": "Ocean View Salon",
+      "description": "Haircut"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 20,
+      "amount": 71.4,
+      "merchant": "Trader Joe's",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 25,
+      "amount": 950.0,
+      "counterparty": "Mesa Gardens HOA",
+      "description": "HOA dues"
+    }
+  ]
+}
