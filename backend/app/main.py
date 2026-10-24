@@ -12,7 +12,9 @@ from pydantic import BaseModel
 from app.agent.baseline import build_baseline
 from app.agent.identity import identity_level, identity_signals
 from app.agent.policy import decide
-from app.agent.risk import assess, assess_identity
+from app.agent.conversation import SIGNALS as CONVERSATION_SIGNALS
+from app.agent.conversation import Conversation, conversation_hits, parent_answer, take_turn
+from app.agent.risk import assess, assess_identity, escalate_from_conversation
 from app.config import settings
 from app.integrations.crs import CREDIT_REPORT_PATHS, CRSClient, CRSError, load_personas
 from app.integrations.nessie_events import fetch_events
@@ -218,7 +220,7 @@ def review(decision_id: str, body: Review) -> Decision:
 def pending_check_in(person_id: str) -> dict | None:
     """The newest decision the parent hasn't answered yet, in plain words. None if all is well."""
     pending = [d for d in list_decisions(person_id)
-               if d.tier is not Tier.LOG and d.parent_response is None]
+               if d.tier is not Tier.LOG and d.parent_response is None and d.conversation_of is None]
     if not pending:
         return None
     d = pending[0]
@@ -248,6 +250,74 @@ def parent_response(decision_id: str, body: ParentResponseIn) -> Decision:
     store.log(decision.assessment.person_id, "parent_responded", decision_id=decision_id,
               answer=body.answer.value)
     return decision
+
+
+class TurnIn(BaseModel):
+    message: str | None = None    # None opens the conversation (idempotent)
+
+
+def _conversation_view(conv: Conversation) -> dict:
+    return {
+        "decision_id": conv.decision_id, "mode": conv.mode, "done": conv.done,
+        "messages": [m.model_dump(mode="json") for m in conv.messages],
+        "suggested_replies": conv.suggested_replies, "signals": conv.signals,
+        "escalations": conv.escalations,
+    }
+
+
+@app.get("/decisions/{decision_id}/conversation")
+def get_conversation(decision_id: str) -> dict | None:
+    decision = store.decisions.get(decision_id)
+    if not decision:
+        raise HTTPException(404, "Unknown decision")
+    conv = store.conversations.get(decision.conversation_of or decision_id)
+    return _conversation_view(conv) if conv else None
+
+
+@app.post("/decisions/{decision_id}/conversation")
+def converse(decision_id: str, body: TurnIn) -> dict:
+    """One turn of the check-in conversation with the parent.
+
+    New evidence from her answers is re-assessed and sent through the action policy as a new,
+    audited decision. Her words can raise the tier, never lower it.
+    """
+    decision = store.decisions.get(decision_id)
+    if not decision:
+        raise HTTPException(404, "Unknown decision")
+    origin = store.decisions.get(decision.conversation_of) if decision.conversation_of else decision
+    person_id = origin.assessment.person_id
+    conv = store.conversations.get(origin.id) or Conversation(decision_id=origin.id, person_id=person_id)
+    if body.message is None and conv.messages:
+        return _conversation_view(conv)
+    if body.message is not None and not body.message.strip():
+        raise HTTPException(400, "Empty message")
+
+    by_id = {e.id: e for e in store.events.get(person_id, [])}
+    events = sorted((by_id[i] for i in origin.assessment.event_ids if i in by_id), key=lambda e: e.occurred_at)
+    learned = take_turn(conv, body.message, events)
+    store.conversations[origin.id] = conv
+    store.log(person_id, "conversation_turn", decision_id=origin.id, source=conv.messages[-1].source,
+              parent=body.message, lookout=conv.messages[-1].text, learned=learned, done=conv.done)
+
+    if any(s in CONVERSATION_SIGNALS for s in learned):
+        quotes = [m.text for m in conv.messages if m.role == "parent"]
+        assessment = escalate_from_conversation(origin.assessment, conversation_hits(conv.signals), quotes)
+        new = decide(assessment)
+        new.conversation_of = origin.id
+        store.decisions[new.id] = new
+        conv.escalations.append(new.id)
+        store.log(person_id, "assessed", decision_id=new.id, tier=new.tier.value, risk=assessment.risk_score,
+                  confidence=assessment.confidence, pattern=assessment.pattern, rules=assessment.rule_hits,
+                  engine=assessment.engine, events=len(assessment.event_ids), kind="conversation")
+
+    if conv.done:
+        answer = parent_answer(conv)
+        now = datetime.now(timezone.utc)
+        for d in [origin, *(store.decisions[i] for i in conv.escalations)]:
+            d.parent_response, d.parent_responded_at = answer, now
+        store.log(person_id, "parent_responded", decision_id=origin.id, answer=answer.value if answer else None,
+                  via="conversation")
+    return _conversation_view(conv)
 
 
 @app.get("/people/{person_id}/audit")

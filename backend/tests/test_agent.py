@@ -96,11 +96,13 @@ class FakeClaude:
         self.payload, self.fail = payload, fail
         self.messages = self
 
-    def create(self, **kwargs):
+    def parse(self, **kwargs):
+        """Mimics messages.parse: validates the payload against the requested output_format."""
         if self.fail:
             raise RuntimeError("network down")
-        assert kwargs["tool_choice"] == {"type": "tool", "name": "report_assessment"}
-        return SimpleNamespace(content=[SimpleNamespace(type="tool_use", input=self.payload)])
+        assert "tool_choice" not in kwargs   # forced tool use is rejected by current models
+        return SimpleNamespace(parsed_output=kwargs["output_format"].model_validate(self.payload),
+                               stop_reason="end_turn")
 
 
 SCAM_WINDOW = [ev(EventKind.PURCHASE, 0, amount=500, merchant="Target", description="Gift cards - bail"),

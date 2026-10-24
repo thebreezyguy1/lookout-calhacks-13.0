@@ -53,6 +53,16 @@
   .note.ok { background: var(--ok-bg); color: var(--ok); }
   .note.bad { background: var(--hold-bg); color: var(--hold); }
 
+  /* Conversation */
+  .transcript { display: grid; gap: 8px; margin-top: 12px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
+  .bubble { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 14px; }
+  .bubble.lookout { background: var(--surface-2); justify-self: start; }
+  .bubble.parent { background: var(--accent); color: var(--accent-ink); justify-self: end; }
+  .bubble .src { display: block; font-size: 11px; opacity: .7; margin-top: 2px; }
+  .said { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .said .chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--hold-bg); color: var(--hold); font-weight: 600; }
+  .said .chip.ok { background: var(--ok-bg); color: var(--ok); }
+
   /* Evidence */
   .signals { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
   .signal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, max-content); gap: 4px 12px; align-items: center; }
@@ -121,8 +131,10 @@
       </section>
 
       <section class="card" id="momAnswer" hidden>
-        <h2>Mom's answer</h2>
+        <h2>Conversation with Mom <span class="muted small" id="convMode" style="text-transform:none;letter-spacing:0"></span></h2>
         <div id="momAnswerBody"></div>
+        <div class="transcript" id="transcript" hidden></div>
+        <div class="said" id="said" hidden></div>
       </section>
 
       <section class="card">

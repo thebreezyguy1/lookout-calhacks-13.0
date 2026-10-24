@@ -83,7 +83,7 @@ def test_quiet_window_never_asks_the_parent() -> None:
 
 def test_frontend_is_served() -> None:
     assert "Family dashboard" in client.get("/app/").text
-    assert "Someone asked me to do this" in client.get("/app/mom.html").text
+    assert "Read this to me" in client.get("/app/mom.html").text
 
 
 class FakeCRS:
@@ -118,3 +118,33 @@ def test_baseline_runs_identity_check_through_policy(monkeypatch) -> None:
 def test_personas_are_listed() -> None:
     ids = [p["id"] for p in client.get("/personas").json()]
     assert len(ids) == 20 and "P20" in ids
+
+
+def test_conversation_escalates_through_policy(monkeypatch) -> None:
+    import app.agent.conversation as conv_mod
+    monkeypatch.setattr(conv_mod.settings, "anthropic_api_key", "")   # scripted, never the real API
+    client.post("/people/mom/inject/scam-quiet-gift-cards")
+    first = client.post("/people/mom/assess", params={"use_llm": False}).json()
+    check_in = client.get("/people/mom/check-in").json()
+    assert check_in["decision_id"] == first["id"]
+
+    url = f"/decisions/{first['id']}/conversation"
+    opened = client.post(url, json={}).json()
+    assert client.post(url, json={}).json() == opened          # opening is idempotent
+    for answer in ["Someone asked me to", "No", "Yes, they did"]:
+        view = client.post(url, json={"message": answer}).json()
+    assert {"someone_asked", "secrecy_requested"} <= set(view["signals"]) and not view["done"]
+
+    latest = client.get("/people/mom/decisions").json()[0]
+    assert latest["conversation_of"] == first["id"]
+    assert latest["assessment"]["risk_score"] > first["assessment"]["risk_score"]
+    assert latest["tier"] == "recommend_hold" and latest["requires_approval"] is True
+    assert client.get("/people/mom/check-in").json()["decision_id"] == first["id"]   # still the same chat
+
+    for answer in ["Yes", "Yes"]:
+        view = client.post(url, json={"message": answer}).json()
+    assert view["done"]
+    assert client.get("/people/mom/check-in").json() is None
+    assert client.get(f"/decisions/{latest['id']}/conversation").json()["done"] is True
+    actions = [r["action"] for r in client.get("/people/mom/audit").json()]
+    assert "conversation_turn" in actions and actions[-1] == "parent_responded"

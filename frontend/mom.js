@@ -1,17 +1,6 @@
-// Parent check-in screen: shows the newest unanswered check-in and records the answer.
+// Parent check-in: a calm conversation about the payments Lookout noticed.
 const PERSON = "mom";
 const $ = (id) => document.getElementById(id);
-
-const THANKS = {
-  was_me: ["Thank you", "That's all we needed. Nothing else to do."],
-  not_me: ["Thank you for telling us",
-    "Your family can see your answer and will reach out to you. Please don't reply to any calls, " +
-    "texts or emails about these payments."],
-  someone_asked: ["Thank you. Please stop for now.",
-    "Don't send any more money or gift cards, even if they say it's urgent or a secret. " +
-    "A real bank, the police or your grandchild will never be upset that you checked first. " +
-    "Please call your family now."],
-};
 
 const money = (x) => (x == null ? "" : x.toLocaleString("en-US", { style: "currency", currency: "USD" }));
 const when = (iso) => new Date(iso).toLocaleString([], { weekday: "long", hour: "numeric", minute: "2-digit" });
@@ -29,66 +18,98 @@ function describe(e) {
   }
 }
 
-let current = null;   // decision id on screen
-let answered = null;  // decision id just answered, so polling doesn't flip back
+let current = null;   // check-in decision id on screen
+let finished = false; // keep a finished conversation on screen until a new check-in arrives
+let lastSpoken = "";
 
 function show(id) {
-  for (const s of ["allWell", "ask", "thanks"]) $(s).hidden = s !== id;
+  for (const s of ["allWell", "talk"]) $(s).hidden = s !== id;
 }
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+function renderEvents(events) {
+  $("events").replaceChildren(...events.slice(0, 4).map((e) => {
+    const li = el("li");
+    li.append(el("div", "what", describe(e)),
+      el("div", "when", [e.description, when(e.when)].filter(Boolean).join(" · ")));
+    return li;
+  }));
+}
+
+function render(conv) {
+  const lookoutMsgs = conv.messages.filter((m) => m.role === "lookout");
+  const last = lookoutMsgs[lookoutMsgs.length - 1];
+  $("chat").replaceChildren(...conv.messages.map((m) =>
+    el("div", `msg ${m.role}${m === last ? " latest" : ""}`, m.text)));
+  $("choices").replaceChildren(...conv.suggested_replies.map((r) => {
+    const b = el("button", null, r);
+    b.type = "button";
+    b.onclick = () => send(r);
+    return b;
+  }));
+  finished = conv.done;
+  $("answer").hidden = conv.done;
+  $("finished").hidden = !conv.done;
+  lastSpoken = last ? last.text : "";
+  (conv.done ? $("finished") : $("choices").querySelector("button") || $("ownText"))
+    ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+function busy(on) {
+  document.querySelectorAll("#answer button, #answer input").forEach((n) => (n.disabled = on));
+}
+
+async function post(body) {
+  const res = await fetch(`/decisions/${current}/conversation`, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(res.statusText);
+  return res.json();
+}
+
+async function send(text) {
+  if (!current || !text.trim()) return;
+  busy(true);
+  $("error").hidden = true;
+  try {
+    render(await post({ message: text }));
+    $("ownText").value = "";
+  } catch {
+    $("error").textContent = "That didn't go through. Please try again, or call your family.";
+    $("error").hidden = false;
+  } finally {
+    busy(false);
+  }
+}
+
+$("own").addEventListener("submit", (ev) => { ev.preventDefault(); send($("ownText").value); });
+
+$("speak").onclick = () => {
+  if (!("speechSynthesis" in window) || !lastSpoken) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(lastSpoken);
+  u.rate = 0.9;
+  speechSynthesis.speak(u);
+};
 
 async function refresh() {
   const res = await fetch(`/people/${PERSON}/check-in`);
   const checkIn = res.ok ? await res.json() : null;
   if (!checkIn) {
-    if (!answered) show("allWell");
-    current = null;
+    if (!finished) { current = null; show("allWell"); }
     return;
   }
-  if (checkIn.decision_id === current) return;  // don't re-render while she's reading
-  answered = null;
+  if (checkIn.decision_id === current) return;   // same conversation, nothing to reload
   current = checkIn.decision_id;
-  $("message").textContent = checkIn.message ||
-    "We noticed some activity on your account that looks unusual. Was this you?";
-  const list = $("events");
-  list.replaceChildren(...checkIn.events.slice(0, 5).map((e) => {
-    const li = document.createElement("li");
-    const what = document.createElement("div");
-    what.className = "what";
-    what.textContent = describe(e);
-    const at = document.createElement("div");
-    at.className = "when";
-    at.textContent = [e.description, when(e.when)].filter(Boolean).join(" · ");
-    li.append(what, at);
-    return li;
-  }));
-  $("error").hidden = true;
-  show("ask");
-}
-
-for (const btn of document.querySelectorAll(".choices button")) {
-  btn.onclick = async () => {
-    if (!current) return;
-    const answer = btn.dataset.answer;
-    document.querySelectorAll(".choices button").forEach((b) => (b.disabled = true));
-    try {
-      const res = await fetch(`/decisions/${current}/parent-response`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answer }),
-      });
-      if (!res.ok) throw new Error();
-      answered = current;
-      const [title, body] = THANKS[answer];
-      $("thanksTitle").textContent = title;
-      $("thanksBody").textContent = body;
-      show("thanks");
-    } catch {
-      $("error").textContent = "Something went wrong. Please try again, or call your family.";
-      $("error").hidden = false;
-    } finally {
-      document.querySelectorAll(".choices button").forEach((b) => (b.disabled = false));
-    }
-  };
+  renderEvents(checkIn.events);
+  show("talk");
+  render(await post({}));                         // opens the conversation, or resumes it
 }
 
 refresh().catch(() => show("allWell"));

@@ -99,16 +99,47 @@ function renderApproval(d) {
   }
 }
 
-function renderMomAnswer(d) {
+const SAID_LABEL = {
+  not_me: "Didn't make these payments",
+  someone_asked: "Someone asked her to pay",
+  on_call_now: "Was on the call during check-in",
+  secrecy_requested: "Told to keep it secret",
+  special_payment: "Asked for gift cards / crypto / wire",
+  urgency_or_trouble: "Told it was urgent",
+  claims_authority: "Caller claimed bank or government",
+  claims_family: "Caller claimed to be family",
+  remote_access: "Gave remote access",
+  confirmed_legit: "Says it's an ordinary payment",
+};
+
+function renderMomAnswer(d, conv) {
   const box = $("momAnswer");
   if (!d || d.tier === "log") { box.hidden = true; return; }
   box.hidden = false;
-  if (!d.parent_response) {
-    $("momAnswerBody").innerHTML = `<div class="note">Mom has been asked on her screen and hasn't answered yet.${d.assessment.parent_message ? `<br><span class="muted">"${esc(d.assessment.parent_message)}"</span>` : ""}</div>`;
-    return;
+  $("convMode").textContent = conv ? (conv.mode === "claude" ? "· with Claude" : "· scripted interview") : "";
+
+  if (d.parent_response) {
+    const [text, kind] = ANSWER_LABEL[d.parent_response];
+    $("momAnswerBody").innerHTML = `<div class="note ${kind}">${esc(text)} <span class="muted small">(${clock(d.parent_responded_at)})</span></div>`;
+  } else {
+    $("momAnswerBody").innerHTML = `<div class="note">${conv && conv.messages.length > 1
+      ? "Mom is talking with Lookout on her screen now. Her answers update the risk live."
+      : "Lookout has opened a check-in on Mom's screen. Waiting for her to answer."}</div>`;
   }
-  const [text, kind] = ANSWER_LABEL[d.parent_response];
-  $("momAnswerBody").innerHTML = `<div class="note ${kind}">${esc(text)} <span class="muted small">(${clock(d.parent_responded_at)})</span></div>`;
+
+  const transcript = $("transcript");
+  transcript.hidden = !conv || !conv.messages.length;
+  if (conv) {
+    const atBottom = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 40;
+    transcript.innerHTML = conv.messages.map((m) => `
+      <div class="bubble ${m.role}">${esc(m.text)}<span class="src">${m.role === "parent" ? "Mom" : `Lookout${m.source === "claude" ? " (Claude)" : ""}`} · ${clock(m.at)}</span></div>`).join("");
+    if (atBottom) transcript.scrollTop = transcript.scrollHeight;
+  }
+  const said = $("said");
+  said.hidden = !conv || !conv.signals.length;
+  if (conv) {
+    said.innerHTML = conv.signals.map((s) => `<span class="chip${s === "confirmed_legit" ? " ok" : ""}">${esc(SAID_LABEL[s] || s)}</span>`).join("");
+  }
 }
 
 function renderSignals(d) {
@@ -162,7 +193,7 @@ function renderHistory(decisions, selectedId) {
   if (!decisions.length) { list.innerHTML = `<li class="empty">None yet.</li>`; return; }
   list.innerHTML = decisions.slice(0, 8).map((d) => `
     <li><span class="tier ${d.tier}" style="font-size:12px;padding:2px 8px">${TIER_LABEL[d.tier]}</span>
-        <span class="muted">${pct(d.assessment.risk_score)} · ${clock(d.created_at)}${d.id === selectedId ? " · current" : ""}</span></li>`).join("");
+        <span class="muted">${pct(d.assessment.risk_score)}${d.conversation_of ? " · from Mom's answers" : ""} · ${clock(d.created_at)}${d.id === selectedId ? " · current" : ""}</span></li>`).join("");
 }
 
 const AUDIT_LABEL = {
@@ -171,7 +202,12 @@ const AUDIT_LABEL = {
   nessie_synced: (x) => `Nessie sync: ${x.new_events} new events`,
   assessed: (x) => x.kind === "identity"
     ? `Identity check on credit file → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)})`
-    : `Assessed ${x.events} events → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)}, ${x.engine})`,
+    : x.kind === "conversation"
+      ? `Re-assessed with Mom's answers → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)})`
+      : `Assessed ${x.events} events → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)}, ${x.engine})`,
+  conversation_turn: (x) => x.parent
+    ? `Mom: "${x.parent}"${x.learned?.length ? ` → learned ${x.learned.map(nice).join(", ")}` : ""}`
+    : `Check-in conversation opened (${x.source === "claude" ? "Claude" : "scripted"})`,
   approved: (x) => `Hold approved by ${x.reviewer}`,
   rejected: (x) => `Hold rejected by ${x.reviewer}`,
   parent_responded: (x) => `Mom answered: ${nice(x.answer)}`,
@@ -196,9 +232,10 @@ async function refresh() {
     api(`/people/${PERSON}/baseline`).catch((e) => (e.status === 404 ? null : Promise.reject(e))),
   ]);
   latest = decisions[0] || null;
+  const conv = latest && latest.tier !== "log" ? await api(`/decisions/${latest.id}/conversation`) : null;
   renderStatus(latest);
   renderApproval(latest);
-  renderMomAnswer(latest);
+  renderMomAnswer(latest, conv);
   renderSignals(latest);
   renderEvents(events, latest);
   renderBaseline(baseline);

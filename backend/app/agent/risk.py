@@ -48,6 +48,24 @@ def assess_identity(person_id: str, hits: list[RuleHit]) -> Assessment:
     )
 
 
+def escalate_from_conversation(original: Assessment, hits: list[RuleHit], quotes: list[str]) -> Assessment:
+    """Add what the parent said to an assessment. It can only raise the risk, never lower it."""
+    signals = [*original.signals, *hits]
+    # Stack her evidence on the original score (which may include Claude's judgment) with the same noisy-OR.
+    score = 1 - (1 - original.risk_score) * (1 - combine(hits))
+    said = "; ".join(h.detail for h in hits)
+    summary = f"In the check-in conversation: {said}." + (f" {original.family_summary}" if original.family_summary else "")
+    return original.model_copy(update={
+        "risk_score": round(score, 4),
+        "confidence": max(original.confidence, rules_confidence(signals)),
+        "pattern": "identity_theft" if any(h.rule == "parent_not_me" for h in hits) else original.pattern,
+        "rule_hits": [h.rule for h in signals],
+        "signals": signals,
+        "reasoning": summary + (f" Her words: \"{' / '.join(quotes)}\"" if quotes else ""),
+        "family_summary": summary,
+    })
+
+
 def assess(person_id: str, window: list[Event], baseline: Baseline | None = None,
            history: list[Event] | None = None, *, use_llm: bool = True,
            llm_client=None) -> Assessment:

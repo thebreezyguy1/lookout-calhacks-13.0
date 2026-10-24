@@ -110,6 +110,7 @@ class Decision(BaseModel):
     reviewed_by: str | None = None
     parent_response: "ParentAnswer | None" = None
     parent_responded_at: datetime | None = None
+    conversation_of: str | None = None   # set when escalated by what the parent said in a check-in
     created_at: datetime = Field(default_factory=_now)
 
 

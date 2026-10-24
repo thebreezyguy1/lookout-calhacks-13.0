@@ -25,6 +25,7 @@ class Store:
         self.events: dict[str, list[Event]] = {}
         self.baselines: dict[str, Baseline] = {}
         self.decisions: dict[str, Decision] = {}
+        self.conversations: dict = {}   # check-in decision id -> agent.conversation.Conversation
         self.audit: list[AuditRecord] = []
 
     def add_events(self, events: list[Event]) -> None:
@@ -56,6 +57,8 @@ class Store:
             self.events.pop(person_id, None)  # baseline is kept: it's real CRS data
             self.decisions = {k: d for k, d in self.decisions.items()
                               if d.assessment.person_id != person_id}
+            self.conversations = {k: c for k, c in self.conversations.items()
+                                  if c.person_id != person_id}
 
 
 store = Store()

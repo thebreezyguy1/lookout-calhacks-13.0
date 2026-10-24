@@ -1,9 +1,9 @@
 """LLM pattern reasoning with Claude.
 
 The model sees the person's baseline, the recent events and the rule hits, and
-returns a structured assessment through a forced tool call. Output is validated
-with Pydantic; anything invalid or any API failure returns None, and the engine
-falls back to the rules-only result.
+returns a structured assessment through structured outputs (`messages.parse` with
+a Pydantic model). Anything invalid, a refusal, or any API failure returns None,
+and the engine falls back to the rules-only result.
 
 What the model may and may not do:
 - It can raise or lower the risk with reasons, name the scam pattern, and write
@@ -13,6 +13,7 @@ What the model may and may not do:
 
 import json
 import logging
+from typing import Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -43,30 +44,12 @@ Guidelines:
 - family_summary: 2-3 plain sentences for the adult child, citing the specific events.
 - parent_message: 1-3 short, warm, non-accusatory sentences addressed to the parent, asking
   them to confirm. Never shame. Never ask for passwords, codes or account numbers.
-Always respond by calling the report_assessment tool."""
-
-TOOL = {
-    "name": "report_assessment",
-    "description": "Report the scam-risk assessment for this window of events.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "pattern": {"type": "string", "enum": PATTERNS},
-            "risk_score": {"type": "number", "minimum": 0, "maximum": 1,
-                           "description": "Probability this window is a scam in progress."},
-            "confidence": {"type": "number", "minimum": 0, "maximum": 1},
-            "reasoning": {"type": "string", "description": "Analyst reasoning, 2-4 sentences."},
-            "family_summary": {"type": "string"},
-            "parent_message": {"type": "string"},
-        },
-        "required": ["pattern", "risk_score", "confidence", "reasoning", "family_summary",
-                     "parent_message"],
-    },
-}
+- risk_score: probability this window is a scam in progress, 0 to 1.
+- reasoning: analyst reasoning, 2-4 sentences."""
 
 
 class LLMAssessment(BaseModel):
-    pattern: str
+    pattern: Literal[tuple(PATTERNS)]  # type: ignore[valid-type]
     risk_score: float = Field(ge=0.0, le=1.0)
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
@@ -97,20 +80,17 @@ def llm_assess(baseline: Baseline | None, window: list[Event], hits: list[RuleHi
         import anthropic
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     try:
-        response = client.messages.create(
+        response = client.messages.parse(
             model=settings.llm_model,
-            max_tokens=1024,
+            max_tokens=16000,
             system=SYSTEM_PROMPT,
-            tools=[TOOL],
-            tool_choice={"type": "tool", "name": "report_assessment"},
             messages=[{"role": "user", "content": build_prompt(baseline, window, hits)}],
+            output_format=LLMAssessment,
         )
-        block = next(b for b in response.content if getattr(b, "type", None) == "tool_use")
-        result = LLMAssessment.model_validate(block.input)
-        if result.pattern not in PATTERNS:
-            raise ValueError(f"unknown pattern {result.pattern!r}")
-        return result
-    except (StopIteration, ValidationError, ValueError) as exc:
+        if response.parsed_output is None:
+            raise ValueError(f"no structured output (stop_reason={getattr(response, 'stop_reason', None)})")
+        return response.parsed_output
+    except (ValidationError, ValueError) as exc:
         log.warning("LLM output invalid, falling back to rules: %s", exc)
     except Exception as exc:  # noqa: BLE001 - any API/network failure falls back
         log.warning("LLM call failed, falling back to rules: %s", exc)

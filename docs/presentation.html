@@ -150,14 +150,14 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
 <div class="page">
   <header class="top">
     <div class="label">Cal Hacks 13.0 · Pitch brief</div>
-    <h1>Look<span class="out">out</span> catches the scam, then asks a human.</h1>
-    <p class="lede">An AI agent that watches an aging parent's bank activity and credit file, connects the dots across events, and responds in proportion. It never moves money.</p>
+    <h1>Look<span class="out">out</span> interrupts the scam while it's still happening.</h1>
+    <p class="lede">Other tools alert the family after the money is gone. Lookout spots the pattern, then talks with Mom, calmly, while the scammer is still on the phone.</p>
     <div class="meta">
       <span>Microsoft · Built for the Real World</span><span>Hyphenate</span><span>CRS</span><span>Capital One Nessie</span><span>Anthropic</span><span>Best People-First Hack</span>
     </div>
     <div class="pitch">
       <div class="label">Devpost pitch (2–3 sentences)</div>
-      <p>Scams against older adults don't look suspicious one transaction at a time; they look suspicious as a pattern. Lookout watches a parent's accounts and credit file with their consent, spots scam patterns like gift cards bought at three stores in one afternoon or a new credit card on a file that's been quiet for years, and responds in proportion: a gentle check-in with the parent, an alert to family with the evidence, or a recommended hold that a person must approve. It never moves money, and every decision is explained and audited.</p>
+      <p>Scams against older adults work because the scammer keeps them on the phone, rushed and sworn to secrecy, and existing tools only alert the family after the money is gone. Lookout watches a parent's accounts and credit file with their consent, and when it sees a scam pattern it opens a calm conversation on their screen that asks the questions that break the spell: are they still on the phone, were they told to keep it secret, did they ask for gift cards. Her answers become evidence that escalates to the family in real time, and a person approves any hold. Lookout never moves money.</p>
     </div>
   </header>
 
@@ -174,12 +174,34 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
   </section>
 
   <section>
+    <div class="label">What's new</div>
+    <h2>The check-in is a conversation, and her answers are the strongest evidence</h2>
+    <p class="col">Watching accounts and alerting family already exists (EverSafe, Carefull, bank trusted-contact programs). What none of them do is step in during the scam. A transaction rule can only guess. "He said not to tell my daughter" is close to proof.</p>
+    <div class="split">
+      <div class="two" style="grid-template-columns:minmax(0,1fr)">
+        <div class="box"><h3>Breaks the isolation</h3><p>One short question at a time: are you on the phone with them right now (it's fine to hang up), did they tell you to keep it secret, did they ask for gift cards or the numbers on the back, did they say a loved one is in trouble.</p></div>
+        <div class="box"><h3>Escalates live</h3><p>Each answer becomes a weighted signal and goes back through the same action policy. In the demo, one $600 prepaid card goes from "Family alerted" (81%) to "Hold recommended" (99%) as she answers. The family watches the transcript as it happens.</p></div>
+        <div class="box"><h3>Can't be talked down</h3><p>Her answers can raise the risk but never lower it, because scammers coach victims to say "it's for me". Reassurance is recorded for the family instead. Claude replies that look like they ask for a code or password are thrown out.</p></div>
+      </div>
+      <div class="momcard" aria-label="The check-in conversation on Mom's screen">
+        <div class="label">Mom's screen</div>
+        <div class="muted" style="font-size:var(--s-2)">$600.00 at CVS Pharmacy · Vanilla prepaid card</div>
+        <div class="b" style="border-color:var(--rule);color:var(--ink);font-weight:500">Did you make this payment yourself?</div>
+        <div class="b" style="border-color:var(--pine);background:var(--pine);color:var(--pine-ink);justify-self:end;font-weight:500">Someone asked me to</div>
+        <div class="b" style="border-color:var(--rule);color:var(--ink);font-weight:500">Are you talking with them right now?</div>
+        <div class="b" style="border-color:var(--pine);background:var(--pine);color:var(--pine-ink);justify-self:end;font-weight:500">Yes, he said my grandson is in jail and not to tell my daughter</div>
+        <div class="b" style="border-color:var(--rule);color:var(--ink);font-weight:500">It's OK to hang up. You can say "I'll call you back." Nobody honest will mind.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <div class="label">What Lookout does</div>
     <h2>Four tiers, and only a person can approve the top one</h2>
     <p class="col">Every response goes through one action policy. Below 60% confidence it never goes past a check-in: ask, don't accuse.</p>
     <div class="ladder">
       <div class="step log"><span class="name">LOG</span><h3>Audit only</h3><p>Normal life. Groceries, the HOA, a birthday gift card.</p><span class="at">risk &lt; 0.40</span></div>
-      <div class="step check"><span class="name">CHECK_IN</span><h3>Ask Mom, kindly</h3><p>Large-text screen: "Was this you?" with three answers.</p><span class="at">risk ≥ 0.40</span></div>
+      <div class="step check"><span class="name">CHECK_IN</span><h3>Talk with Mom</h3><p>A calm, large-text conversation. Her answers can escalate the tier.</p><span class="at">risk ≥ 0.40</span></div>
       <div class="step alert"><span class="name">ALERT</span><h3>Tell the family</h3><p>Plain-language summary plus the exact events and signals.</p><span class="at">risk ≥ 0.65</span></div>
       <div class="step hold"><span class="name">RECOMMEND_HOLD</span><h3>Human approves</h3><p>Pause payments, or freeze credit for identity theft. The family does it; Lookout can't.</p><span class="at">risk ≥ 0.85</span></div>
     </div>
@@ -191,7 +213,7 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
     <div class="flow">
       <div><b>Data</b><span>Nessie bank activity (read-only), CRS credit reports from 3 bureaus plus Fraud Finder, and a labeled scenario injector for the demo.</span></div>
       <div><b>Rules</b><span>16 transaction rules and 10 identity signals, combined with a noisy-OR so weak signals add up and one strong signal is enough.</span></div>
-      <div><b>Claude</b><span>Names the pattern, writes the family summary and Mom's check-in. Returns JSON through a forced tool call, validated with Pydantic.</span></div>
+      <div><b>Claude</b><span>Leads the conversation with Mom, names the pattern and writes the family summary. Every turn is structured output validated with Pydantic, with a scripted interview as fallback.</span></div>
       <div><b>Policy + audit</b><span>Picks the tier. Every decision is logged with the events, rule hits, reasoning, confidence and tier.</span></div>
     </div>
     <p class="col">Claude can raise the risk but can only lower the rules' score by 0.15 at most, so a strong signal can't be argued away. If Claude fails or returns invalid output, the rules result stands.</p>
@@ -219,24 +241,26 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
     <div class="tw"><table>
       <thead><tr><th>Eval</th><th>Data</th><th>Caught</th><th>False alarms</th><th>Time to detect</th></tr></thead>
       <tbody>
-        <tr><td>Scam scenarios, dev set</td><td>14 scenarios (8 scam, 6 normal)</td><td class="num">8/8 · 100%</td><td class="num">0/6 · 0%</td><td class="num">median 15 min</td></tr>
-        <tr><td><strong>Scam scenarios, blind holdout</strong></td><td>16 scenarios (8 scam, 8 normal)</td><td class="num"><strong>7/8 · 87.5%</strong></td><td class="num"><strong>2/8 · 25%</strong></td><td class="num">median 8 min</td></tr>
+        <tr><td>Dev set, rules only</td><td>14 scenarios (8 scam, 6 normal)</td><td class="num">8/8 · 100%</td><td class="num">0/6 · 0%</td><td class="num">median 15 min</td></tr>
+        <tr><td>Dev set, rules + Claude</td><td>same</td><td class="num">7/8 · 87.5%</td><td class="num">0/6 · 0%</td><td class="num">-</td></tr>
+        <tr><td>Blind holdout, rules only</td><td>16 scenarios (8 scam, 8 normal)</td><td class="num">7/8 · 87.5%</td><td class="num">2/8 · 25%</td><td class="num">median 8 min</td></tr>
+        <tr><td><strong>Blind holdout, rules + Claude</strong></td><td>same</td><td class="num"><strong>7/8 · 87.5%</strong></td><td class="num"><strong>0/8 · 0%</strong></td><td class="num">median 8 min</td></tr>
         <tr><td>Identity check, real CRS data</td><td>All 20 sandbox personas, 3 bureaus each</td><td class="num">4/4 identity cases</td><td class="num">0/16 clean</td><td class="num">-</td></tr>
       </tbody>
     </table></div>
     <div class="two">
       <div class="box">
-        <h3>Where the rules fall short (holdout)</h3>
+        <h3>What Claude changed, and what it didn't</h3>
         <ul class="plain">
-          <li><span class="chip miss">Missed</span> Gift cards labeled only "Apple Store", with no "gift card" wording.</li>
-          <li><span class="chip miss">False alarm</span> A car loan on an active credit file: two inquiries and a new account.</li>
-          <li><span class="chip miss">False alarm</span> A $48,250 closing wire to a title company she'd already paid earnest money to.</li>
-          <li>Two normals got a gentle check-in, not an alarm: a $300 wedding gift card and a monthly Western Union to her sister.</li>
+          <li><span class="chip real">Fixed</span> Both rules-only false alarms (a car loan on an active file, a $48,250 closing wire to a known title company) drop to a gentle check-in.</li>
+          <li><span class="chip miss">Still short</span> Gift cards labeled only "Apple Store" rise from no action to a check-in, below the expected alert.</li>
+          <li><span class="chip miss">New miss</span> Two $3,000 cash withdrawals with no memo: Claude lowered it from alert to check-in. Its discount is capped at 0.15, which is why it stopped there.</li>
+          <li>Half of normal scenarios get a check-in. That's the trade: fewer alarms to the family, more quick questions to Mom.</li>
         </ul>
       </div>
       <div class="box">
-        <h3>Why that's the right story</h3>
-        <p>Every miss needs context a keyword can't see: a relationship in her history, or the meaning of a merchant. That's the job of the Claude layer, and the next eval to run is the same holdout with Claude on (<code>run_evals --set holdout --llm</code>).</p>
+        <h3>Why the check-ins matter now</h3>
+        <p>Every remaining miss lands on a check-in, and a check-in now opens the conversation. That's where Mom says "the bank's fraud department told me to" or "he said not to tell my daughter", and the tier climbs on her words. Scoring the conversation itself is the next eval to build.</p>
         <p>The identity check doesn't treat credit quality as fraud: bankruptcy, collections and a low score stay clear, because that's the person's own history.</p>
       </div>
     </div>
@@ -247,20 +271,17 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
     <h2>Two screens side by side: the family dashboard and Mom's tablet</h2>
     <div class="split">
       <ol class="script">
-        <li><div><strong>Pull Mom's real file.</strong> Dashboard → "Pull from CRS sandbox", P20. Point at "Dormant", 84 months, identity clear. <div class="t">0:00–0:40 · live CRS</div></div></li>
-        <li><div><strong>Run the scam.</strong> Simulation panel → grandparent bail → Inject, then Assess. Hold recommended at 95%, with the evidence and the three highlighted purchases. <div class="t">0:40–1:40 · labeled as simulated</div></div></li>
-        <li><div><strong>Mom answers.</strong> On her screen she taps "Someone asked me to do this". Her answer appears on the dashboard within 3 seconds. <div class="t">1:40–2:30</div></div></li>
-        <li><div><strong>A person decides.</strong> Approve the hold. Show that Lookout tells the family what to do and never does it itself. Open the audit log. <div class="t">2:30–3:15</div></div></li>
+        <li><div><strong>Pull Mom's real file.</strong> Dashboard → "Pull from CRS sandbox", P20. Point at "Dormant", 84 months, identity clear. <div class="t">0:00–0:30 · live CRS</div></div></li>
+        <li><div><strong>A quiet scam starts.</strong> Simulation panel → quiet gift cards → Inject, then Assess. One $600 prepaid card: "Family alerted" at 81%. A bank would probably let this through. <div class="t">0:30–1:00 · labeled as simulated</div></div></li>
+        <li><div><strong>Lookout talks with Mom.</strong> On her screen: "Someone asked me to." Then she types: "he's still on the phone, he said my grandson is in jail and not to tell my daughter." Lookout tells her it's OK to hang up. <div class="t">1:00–2:15 · the moment</div></div></li>
+        <li><div><strong>The family sees it live.</strong> The dashboard climbs to "Hold recommended" at 99%, with her words quoted as evidence. Approve the hold; Lookout tells the family what to do and never does it itself. Open the audit log. <div class="t">2:15–3:15</div></div></li>
         <li><div><strong>Identity theft on real data.</strong> Switch persona to P13. Flagged at 94% from an inquiry burst, a 9-day-old email and someone else's phone number. The recommendation becomes a credit freeze. <div class="t">3:15–4:00 · live CRS</div></div></li>
-        <li><div><strong>The numbers.</strong> Blind holdout 87.5% caught, 25% false alarms, with the misses named. Path to production on Azure. <div class="t">4:00–5:00</div></div></li>
+        <li><div><strong>The numbers.</strong> Blind holdout with Claude: 7/8 caught, 0/8 false alarms, with the misses named. Path to production on Azure. <div class="t">4:00–5:00</div></div></li>
       </ol>
-      <div class="momcard" aria-label="Mom's check-in screen, as shown in the demo">
-        <div class="label">Mom's screen</div>
-        <div class="q">Can you help us check something?</div>
-        <div class="muted" style="font-size:var(--s-2)">$500.00 at Target · Gift cards, bail for grandson</div>
-        <div class="b y">Yes, that was me</div>
-        <div class="b n">No, that wasn't me</div>
-        <div class="b a">Someone asked me to do this</div>
+      <div class="box">
+        <h3>Setup</h3>
+        <p>Laptop with the family dashboard, a tablet with Mom's screen (<code>/app/mom.html</code>). Both update every 3 seconds.</p>
+        <p>With an Anthropic key set, Claude leads the conversation. Without one, or if the Wi-Fi drops, the scripted interview runs the same flow with no network.</p>
       </div>
     </div>
     <p class="col muted">If the Wi-Fi drops, run with <code>use_llm=false</code>; the scam flow needs no network. Only the CRS pulls do.</p>
@@ -288,7 +309,7 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
         <tr><td>One container, in-memory store</td><td>Azure Container Apps (deploy script ready in <code>infra/azure/deploy.sh</code>) + Azure Database for PostgreSQL</td></tr>
         <tr><td>Keys in environment variables</td><td>Azure Key Vault</td></tr>
         <tr><td>Audit log in memory</td><td>Azure Monitor and Application Insights</td></tr>
-        <tr><td>Browser check-in screen</td><td>Tablet app and SMS check-ins, with the same three answers</td></tr>
+        <tr><td>Browser check-in conversation</td><td>Voice call or SMS, so Lookout can reach her while she's on the phone with the scammer; shared scam radar across families (payees and phone numbers seen in other cases)</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -302,7 +323,7 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
         <tr><td>Hyphenate · Autonomous finance</td><td>An agent that acts on its own up to a line, then hands off. Clear about what's real and what's simulated.</td></tr>
         <tr><td>CRS</td><td>CRS is central: Mom's baseline, three-bureau identity check, Fraud Finder, and an eval across all 20 personas on live responses.</td></tr>
         <tr><td>Capital One Nessie</td><td>Read-only ingest of purchases, transfers and withdrawals, normalized into events.</td></tr>
-        <tr><td>Anthropic</td><td>Claude adds judgment where it matters, with structured output, a bounded influence on risk and a rules fallback.</td></tr>
+        <tr><td>Anthropic</td><td>Claude talks with a vulnerable person at the moment it matters most, with structured turns, a guard against asking for secrets, evidence that can only add risk, and a scripted fallback.</td></tr>
       </tbody>
     </table></div>
   </section>
@@ -310,7 +331,6 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
   <section>
     <div class="label">Before you present</div>
     <ul class="plain col">
-      <li>Add an Anthropic API key and run the holdout with Claude on, so you can show both numbers.</li>
       <li>Collect 5+ quotes from people caring for an aging parent (Microsoft checklist).</li>
       <li>Deploy to Azure with <code>infra/azure/deploy.sh</code> and put the live URL on Devpost.</li>
       <li>Rotate the Nessie and CRS credentials that were pushed to GitHub in <code>.env.example</code>.</li>

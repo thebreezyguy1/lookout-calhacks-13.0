@@ -6,32 +6,48 @@
 <title>Lookout · Check-in</title>
 <link rel="stylesheet" href="styles.css">
 <style>
-  /* Designed for an older adult: very large type, high contrast, one thing at a time. */
+  /* Designed for an older adult: very large type, high contrast, one question at a time. */
   body { font-size: 24px; line-height: 1.5; }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 64px; }
-  .brand { font-size: 22px; font-weight: 700; color: var(--muted); margin-bottom: 28px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 22px; }
+  .brand { font-size: 22px; font-weight: 700; color: var(--muted); }
   .brand span { color: var(--accent); }
-  h1 { font-size: 40px; line-height: 1.2; margin: 0 0 20px; letter-spacing: -0.01em; }
-  p { margin: 0 0 20px; }
+  h1 { font-size: 40px; line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
+  p { margin: 0; }
   .card { background: var(--surface); border: 2px solid var(--border); border-radius: 16px; padding: 28px; }
-  .events { list-style: none; margin: 0 0 28px; padding: 0; display: grid; gap: 14px; }
-  .events li { background: var(--surface-2); border-radius: 12px; padding: 16px 20px; }
-  .events .what { font-weight: 700; font-size: 28px; }
-  .events .when { color: var(--muted); font-size: 20px; }
-  .choices { display: grid; gap: 16px; }
-  .choices button {
-    width: 100%; min-height: 84px; padding: 18px 24px; border-radius: 14px; font-size: 28px; font-weight: 700;
-    text-align: left; cursor: pointer; border: 3px solid var(--border); background: var(--surface);
+  .calm { text-align: center; padding: 48px 28px; display: grid; gap: 16px; }
+  .calm .mark { width: 96px; height: 96px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center; margin: 0 auto; font-size: 56px; font-weight: 700; }
+
+  .events { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .events li { background: var(--surface-2); border-radius: 12px; padding: 12px 18px; }
+  .events .what { font-weight: 700; font-size: 26px; }
+  .events .when { color: var(--muted); font-size: 19px; }
+
+  .chat { display: grid; gap: 14px; }
+  .msg { max-width: 88%; padding: 16px 20px; border-radius: 18px; font-size: 26px; line-height: 1.45; }
+  .msg.lookout { background: var(--surface); border: 2px solid var(--border); justify-self: start; border-bottom-left-radius: 6px; }
+  .msg.parent { background: var(--accent); color: var(--accent-ink); justify-self: end; border-bottom-right-radius: 6px; }
+  .msg.latest { border-color: var(--accent); }
+
+  .answer { display: grid; gap: 14px; }
+  .choices { display: grid; gap: 12px; }
+  .choices button, .send, .speak {
+    min-height: 72px; padding: 14px 22px; border-radius: 14px; font-size: 26px; font-weight: 700;
+    cursor: pointer; border: 3px solid var(--accent); background: var(--surface); color: var(--accent); text-align: left;
   }
-  .choices button:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
-  .choices .yes { border-color: var(--ok); color: var(--ok); }
-  .choices .no { border-color: var(--alert); color: var(--alert); }
-  .choices .asked { border-color: var(--hold); color: var(--hold); }
-  .choices button:disabled { opacity: .5; }
-  .calm { text-align: center; padding: 48px 28px; }
-  .calm .mark { width: 96px; height: 96px; border-radius: 50%; background: var(--ok-bg); color: var(--ok); display: grid; place-items: center; margin: 0 auto 24px; font-size: 56px; font-weight: 700; }
-  .safety { margin-top: 28px; font-size: 20px; color: var(--muted); }
-  .error { color: var(--hold); font-size: 20px; margin-top: 16px; }
+  .choices button:hover { background: var(--surface-2); }
+  .own { display: flex; gap: 10px; flex-wrap: wrap; }
+  .own input { flex: 1 1 260px; min-width: 0; min-height: 72px; font-size: 24px; padding: 12px 16px; border-radius: 14px; border: 3px solid var(--border); background: var(--surface); }
+  .send { background: var(--accent); color: var(--accent-ink); text-align: center; }
+  .speak { border-color: var(--border); color: var(--text); font-size: 20px; min-height: 56px; justify-self: start; }
+  button:focus-visible, input:focus-visible { outline: 4px solid var(--accent); outline-offset: 3px; }
+  button:disabled, input:disabled { opacity: .5; cursor: progress; }
+  .finished { background: var(--ok-bg); color: var(--ok); border-radius: 14px; padding: 16px 20px; font-size: 22px; }
+  .safety { font-size: 20px; color: var(--muted); }
+  .error { color: var(--hold); font-size: 20px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .msg { animation: rise .25s ease-out; }
+    @keyframes rise { from { transform: translateY(6px); opacity: .6; } to { transform: none; opacity: 1; } }
+  }
 </style>
 </head>
 <body>
@@ -44,21 +60,21 @@
     <p>Nothing needs your attention right now.</p>
   </section>
 
-  <section id="ask" class="card" hidden>
-    <h1>Can you help us check something?</h1>
-    <p id="message"></p>
-    <ul class="events" id="events"></ul>
-    <div class="choices">
-      <button class="yes" data-answer="was_me">Yes, that was me</button>
-      <button class="no" data-answer="not_me">No, that wasn't me</button>
-      <button class="asked" data-answer="someone_asked">Someone asked me to do this</button>
+  <section id="talk" hidden>
+    <div style="display:grid;gap:18px">
+      <ul class="events" id="events" aria-label="The payments we're asking about"></ul>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="answer" id="answer">
+        <div class="choices" id="choices"></div>
+        <form class="own" id="own">
+          <input id="ownText" autocomplete="off" placeholder="Or type your answer here" aria-label="Type your answer">
+          <button class="send" type="submit">Send</button>
+        </form>
+        <button class="speak" id="speak" type="button">Read this to me</button>
+      </div>
+      <div class="finished" id="finished" hidden>Thank you. You can close this screen now.</div>
+      <div class="error" id="error" hidden></div>
     </div>
-    <div class="error" id="error" hidden></div>
-  </section>
-
-  <section id="thanks" class="card" hidden>
-    <h1 id="thanksTitle"></h1>
-    <p id="thanksBody"></p>
   </section>
 
   <p class="safety">Lookout will never ask for your passwords, codes or account numbers, and it never moves your money.</p>

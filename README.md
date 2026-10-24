@@ -88,11 +88,17 @@ Reports detection rate, false-alarm rate, normal check-in rate and median time-t
 
 | Eval | Caught | False alarms |
 |---|---|---|
-| Dev set (`evals/scenarios/`, 8 scam / 6 normal, written with the rules) | 8/8 | 0/6 |
-| **Blind holdout** (`evals/holdout/`, 8 scam / 8 normal, not tuned against) | **7/8** | **2/8** |
+| Dev set (`evals/scenarios/`, 8 scam / 6 normal, written with the rules), rules only | 8/8 | 0/6 |
+| Dev set, rules + Claude | 7/8 | 0/6 |
+| Blind holdout (`evals/holdout/`, 8 scam / 8 normal, not tuned against), rules only | 7/8 | 2/8 |
+| **Blind holdout, rules + Claude** | **7/8** | **0/8** |
 | Identity check on real CRS responses (20 personas) | 4/4 identity cases | 0/16 clean |
 
-Rules only. The holdout misses need context (a known payee, an active credit file, a merchant name with no "gift card" wording), which is what the Claude layer is for.
+With Claude, the holdout false alarms become gentle check-ins (half of normal scenarios get one), and every remaining miss lands on a check-in, which opens the conversation with the parent.
+
+## The check-in conversation
+
+When Lookout checks in, Mom's screen opens a short conversation (`backend/app/agent/conversation.py`): did she make the payment, is someone asking her to, is she on the phone with them right now (it's fine to hang up), was she told to keep it secret, did they ask for gift cards, crypto or a courier. Each answer becomes a weighted signal and goes back through the action policy, so the family dashboard escalates live while she talks. Her answers can raise the risk, never lower it. Claude leads the conversation when `ANTHROPIC_API_KEY` is set (structured output, with replies that ask for codes or passwords discarded); otherwise, or on any failure, a scripted interview runs the same flow offline.
 
 ## Deploy to Azure
 
