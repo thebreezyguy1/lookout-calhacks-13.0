@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lookout · Check-in</title>
 <link rel="stylesheet" href="styles.css">
+<script>if (new URLSearchParams(location.search).has("compact")) document.documentElement.classList.add("compact");</script>
 <style>
   /* Designed for an older adult: very large type, high contrast, one question at a time. */
   body { font-size: 24px; line-height: 1.5; }
@@ -44,6 +45,20 @@
   .finished { background: var(--ok-bg); color: var(--ok); border-radius: 14px; padding: 16px 20px; font-size: 22px; }
   .safety { font-size: 20px; color: var(--muted); }
   .error { color: var(--hold); font-size: 20px; }
+  /* Compact: inside the demo phone. Still large for a phone, smaller than the tablet view. */
+  .compact body { font-size: 19px; }
+  .compact .wrap { padding: 14px 12px 24px; gap: 14px; }
+  .compact .brand { display: none; }
+  .compact h1 { font-size: 28px; }
+  .compact .msg { font-size: 19px; padding: 12px 14px; }
+  .compact .events .what { font-size: 19px; }
+  .compact .events .when { font-size: 15px; }
+  .compact .choices button, .compact .send { font-size: 19px; min-height: 54px; padding: 10px 14px; }
+  .compact .speak { font-size: 16px; min-height: 44px; }
+  .compact .own input { font-size: 18px; min-height: 54px; flex-basis: 160px; }
+  .compact .safety, .compact .finished, .compact .error { font-size: 15px; }
+  .compact .calm { padding: 28px 16px; }
+  .compact .calm .mark { width: 64px; height: 64px; font-size: 36px; }
   @media (prefers-reduced-motion: no-preference) {
     .msg { animation: rise .25s ease-out; }
     @keyframes rise { from { transform: translateY(6px); opacity: .6; } to { transform: none; opacity: 1; } }

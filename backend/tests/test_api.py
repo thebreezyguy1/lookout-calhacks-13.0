@@ -148,3 +148,55 @@ def test_conversation_escalates_through_policy(monkeypatch) -> None:
     assert client.get(f"/decisions/{latest['id']}/conversation").json()["done"] is True
     actions = [r["action"] for r in client.get("/people/mom/audit").json()]
     assert "conversation_turn" in actions and actions[-1] == "parent_responded"
+
+
+def test_scam_texts_pop_up_a_check_in_and_payment_escalates(monkeypatch) -> None:
+    import app.agent.conversation as conv_mod
+    monkeypatch.setattr(conv_mod.settings, "anthropic_api_key", "")
+    sms = {"channel": "sms", "sender": "+1 (202) 555-0147", "use_llm": False}
+    first = client.post("/people/mom/comms", json={**sms, "text": "IRS NOTICE: a warrant for your arrest "
+                                                    "will be issued today."}).json()
+    assert "authority" in first["tactics"] and first["event"]["source"] == "injector"
+    second = client.post("/people/mom/comms", json={**sms, "text": "Pay now through a Bitcoin ATM. "
+                                                     "Do not discuss this case with anyone."}).json()
+    assert second["decision"]["tier"] in ("check_in", "alert")
+    check_in = client.get("/people/mom/check-in").json()
+    opened = client.post(f"/decisions/{check_in['decision_id']}/conversation", json={}).json()
+    assert "a text from +1 (202) 555-0147" in opened["messages"][0]["text"]
+
+    client.post("/people/mom/events", params={"auto_assess": True},
+                json=[{"kind": "purchase", "amount": 3000, "merchant": "Bitcoin Depot ATM"}])
+    latest = client.get("/people/mom/decisions").json()[0]
+    assert latest["tier"] == "recommend_hold"
+    assert "scam_contact_then_payment" in latest["assessment"]["rule_hits"]
+    assert latest["conversation_of"] == check_in["decision_id"]   # stays in Mom's open conversation
+
+
+def test_ordinary_text_does_not_create_a_decision() -> None:
+    r = client.post("/people/mom/comms", json={"channel": "sms", "sender": "CVS Pharmacy", "use_llm": False,
+                                               "text": "Your prescription is ready for pickup."}).json()
+    assert r["decision"] is None and client.get("/people/mom/check-in").json() is None
+
+
+def test_demo_stage_is_served() -> None:
+    assert "Scammer console" in client.get("/app/phone.html").text
+
+
+def test_answer_after_a_payment_keeps_the_payment_evidence(monkeypatch) -> None:
+    import app.agent.conversation as conv_mod
+    monkeypatch.setattr(conv_mod.settings, "anthropic_api_key", "")
+    call = {"channel": "call", "sender": "Unknown caller", "use_llm": False}
+    client.post("/people/mom/comms", json={**call, "text": "Grandma, I was in an accident and need bail."})
+    client.post("/people/mom/comms", json={**call, "text": "Don't tell Mom. Buy Google Play gift cards now."})
+    origin = client.get("/people/mom/check-in").json()["decision_id"]
+    url = f"/decisions/{origin}/conversation"
+    client.post(url, json={})
+    client.post(url, json={"message": "Someone asked me to"})
+    client.post("/people/mom/events", params={"auto_assess": True},
+                json=[{"kind": "purchase", "amount": 500, "merchant": "CVS", "description": "Google Play gift cards"}])
+    with_payment = client.get("/people/mom/decisions").json()[0]
+    client.post(url, json={"message": "Yes, right now"})
+    latest = client.get("/people/mom/decisions").json()[0]
+    assert "scam_contact_then_payment" in latest["assessment"]["rule_hits"]
+    assert latest["assessment"]["risk_score"] >= with_payment["assessment"]["risk_score"]
+    assert latest["assessment"]["rule_hits"].count("parent_someone_asked") == 1

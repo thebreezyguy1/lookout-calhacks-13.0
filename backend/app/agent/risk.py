@@ -50,9 +50,13 @@ def assess_identity(person_id: str, hits: list[RuleHit]) -> Assessment:
 
 def escalate_from_conversation(original: Assessment, hits: list[RuleHit], quotes: list[str]) -> Assessment:
     """Add what the parent said to an assessment. It can only raise the risk, never lower it."""
-    signals = [*original.signals, *hits]
-    # Stack her evidence on the original score (which may include Claude's judgment) with the same noisy-OR.
-    score = 1 - (1 - original.risk_score) * (1 - combine(hits))
+    # `original` may already carry her earlier answers: replace them rather than count them twice.
+    kept = [h for h in original.signals if not h.rule.startswith("parent_")]
+    had_answers = len(kept) != len(original.signals)
+    signals = [*kept, *hits]
+    # Stack her evidence on the score without her answers (which may include Claude's judgment), same noisy-OR.
+    base = combine(kept) if had_answers else original.risk_score
+    score = 1 - (1 - base) * (1 - combine(hits))
     said = "; ".join(h.detail for h in hits)
     summary = f"In the check-in conversation: {said}." + (f" {original.family_summary}" if original.family_summary else "")
     return original.model_copy(update={

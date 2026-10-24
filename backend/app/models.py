@@ -25,6 +25,8 @@ class EventKind(str, Enum):
     CREDIT_INQUIRY = "credit_inquiry"
     NEW_CREDIT_ACCOUNT = "new_credit_account"
     IDENTITY_CHECK = "identity_check"
+    TEXT_MESSAGE = "text_message"        # counterparty = sender, description = message text
+    CALL_TRANSCRIPT = "call_transcript"  # one caption line from a call; counterparty = caller
 
 
 class Event(BaseModel):

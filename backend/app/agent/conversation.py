@@ -26,7 +26,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.agent.rules import AUTHORITY, CRYPTO_OR_WIRE, FAMILY_EMERGENCY, GIFT_CARD, REMOTE_ACCESS
 from app.config import settings
-from app.models import Event, ParentAnswer, RuleHit
+from app.models import Event, EventKind, ParentAnswer, RuleHit
 
 log = logging.getLogger(__name__)
 
@@ -91,18 +91,26 @@ def parent_answer(conv: Conversation) -> ParentAnswer | None:
 
 def describe_events(events: list[Event]) -> str:
     def one(e: Event) -> str:
+        if e.kind is EventKind.TEXT_MESSAGE:
+            return f"a text from {e.counterparty or 'an unknown number'}"
+        if e.kind is EventKind.CALL_TRANSCRIPT:
+            return f"a call from {e.counterparty or 'an unknown number'}"
         amount = f"${e.amount:,.0f}" if e.amount else ""
         where = e.merchant or e.counterparty or ""
         return " at ".join(p for p in (amount, where) if p) or (e.description or "a payment")
-    parts = [one(e) for e in events[:3]]
-    more = f" and {len(events) - 3} more" if len(events) > 3 else ""
-    return (", ".join(parts) + more) if parts else "some unusual activity on your account"
+    parts = list(dict.fromkeys(one(e) for e in events))
+    more = f" and {len(parts) - 3} more" if len(parts) > 3 else ""
+    return (", ".join(parts[:3]) + more) if parts else "some unusual activity on your account"
+
+
+def is_money(e: Event) -> bool:
+    return e.kind not in (EventKind.TEXT_MESSAGE, EventKind.CALL_TRANSCRIPT)
 
 
 # ---------- scripted interview ----------
 
 YES = re.compile(r"^\s*(yes|yeah|yep|yup|i did|correct|right|sure|uh huh|they did|they are|i am)\b", re.I)
-NO = re.compile(r"^\s*(no|nope|nah|not really|never|i didn't|they didn't|it was my own)\b", re.I)
+NO = re.compile(r"^\s*(no|nope|nah|not really|never|i didn't|they didn't|it was my own|i'?m not sure|not sure)\b", re.I)
 
 
 class Node(BaseModel):
@@ -119,6 +127,14 @@ SCRIPT: dict[str, Node] = {
     "start": Node(text="Hi, it's Lookout. I noticed {events}. Did you make {these} yourself?",
                   replies=["Yes, I did", "No, that wasn't me", "Someone asked me to"],
                   on_yes="who_asked", on_no="end_not_me", no_signals=["not_me"]),
+    # Opening when what Lookout saw is a text or call, not a payment.
+    "start_comms": Node(text="Hi, it's Lookout. I saw {events}, and it looks like it could be a scam. "
+                             "Has someone asked you to send money, buy gift cards or share a code?",
+                        replies=["Yes, they have", "No", "I'm not sure"],
+                        on_yes="on_call", on_no="known_sender", yes_signals=["someone_asked"]),
+    "known_sender": Node(text="Do you know this person, and have you met them in real life?",
+                         replies=["Yes, I know them", "No"], on_yes="end_legit", on_no="secret",
+                         yes_signals=[REASSURANCE]),
     "who_asked": Node(text="Thank you. Did someone call, text or email you and ask you to make them?",
                       replies=["Yes, someone asked me", "No, it was my own idea"],
                       on_yes="on_call", on_no="known", yes_signals=["someone_asked"]),
@@ -236,7 +252,9 @@ def scripted_turn(conv: Conversation, parent_text: str | None, events: list[Even
 # ---------- Claude ----------
 
 SYSTEM_PROMPT = """You are Lookout, speaking with an older adult on a large-text screen during a possible scam.
-Their family set Lookout up with their consent. You already know the payments listed in the context.
+Their family set Lookout up with their consent. You already know what Lookout noticed (payments, or
+texts and calls they received), listed in the context. If it was a text or call, refer to it plainly
+("the text from that number") without repeating anything like a code or link it contained.
 
 Your job, in order:
 1. Find out calmly whether they made these payments, and if someone asked them to.
@@ -278,7 +296,9 @@ def _claude_turn(conv: Conversation, parent_text: str | None, events: list[Event
             return None
         import anthropic
         client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    context = (f"Payments Lookout is asking about: {describe_events(events)}.\n"
+    said = [f'{e.counterparty or "unknown"}: "{e.description}"' for e in events if not is_money(e)][-6:]
+    context = (f"What Lookout noticed: {describe_events(events)}.\n"
+               + (f"What the sender said:\n" + "\n".join(said) + "\n" if said else "") +
                f"Signals so far: {', '.join(conv.signals) or 'none'}.\n"
                f"Turns so far: {sum(m.role == 'lookout' for m in conv.messages)} of {MAX_TURNS}.")
     opened = {"role": "user", "content": "(The check-in screen just opened. Greet them and ask your first question.)"}

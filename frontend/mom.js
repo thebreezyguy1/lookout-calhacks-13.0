@@ -12,6 +12,8 @@ function describe(e) {
     case "transfer": return `${money(e.amount)} sent to ${e.where || "someone"}`;
     case "withdrawal": return `${money(e.amount)} taken out in cash`;
     case "new_payee": return `New person added to pay: ${e.where || ""}`;
+    case "text_message": return `Text from ${e.where || "an unknown number"}`;
+    case "call_transcript": return `Call from ${e.where || "an unknown number"}`;
     case "credit_inquiry": return `Someone applied for credit in your name${e.where ? ` with ${e.where}` : ""}`;
     case "new_credit_account": return `A new account was opened in your name${e.where ? ` with ${e.where}` : ""}`;
     default: return e.description || "Activity on your account";
@@ -34,7 +36,14 @@ function el(tag, className, text) {
 }
 
 function renderEvents(events) {
-  $("events").replaceChildren(...events.slice(0, 4).map((e) => {
+  // One card per sender for texts and calls (showing their latest line), one per payment.
+  const cards = [];
+  for (const e of events) {
+    const comms = e.kind === "text_message" || e.kind === "call_transcript";
+    const prev = cards.find((c) => comms && c.kind === e.kind && c.where === e.where);
+    if (prev) Object.assign(prev, e); else cards.push({ ...e });
+  }
+  $("events").replaceChildren(...cards.slice(-4).map((e) => {
     const li = el("li");
     li.append(el("div", "what", describe(e)),
       el("div", "when", [e.description, when(e.when)].filter(Boolean).join(" · ")));

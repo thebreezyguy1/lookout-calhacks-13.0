@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from app.agent.baseline import build_baseline, diff_reports
 from app.agent.policy import decide
 from app.agent.risk import assess
-from app.agent.rules import combine, rule_signals
+from app.agent.rules import combine, guess_pattern, rule_signals
 from app.models import Baseline, Event, EventKind, EventSource, Tier
 
 NOW = datetime(2026, 10, 24, 18, 0, tzinfo=timezone.utc)
@@ -128,3 +128,46 @@ def test_llm_result_is_blended_and_bounded() -> None:
     # Claude can't argue a strong rule signal away by more than 0.15.
     assert a.risk_score >= rules_only.risk_score - 0.15 - 1e-9
     assert a.pattern == rules_only.pattern  # "none" keeps the rules' pattern
+
+
+# ---------- texts and calls ----------
+
+def msg(minutes: int, text: str, sender: str = "+1 (213) 555-0186", kind=EventKind.CALL_TRANSCRIPT, **raw) -> Event:
+    return ev(kind, minutes, counterparty=sender, description=text, raw=raw)
+
+
+def test_scam_call_language_is_flagged_and_named() -> None:
+    window = [msg(0, "Grandma, I was in an accident and the police arrested me"),
+              msg(2, "Please don't tell Mom, and buy Google Play gift cards right now")]
+    hits = rule_signals(window)
+    assert hits[0].rule == "message_family_emergency" and "keep it secret" in hits[0].detail
+    assert guess_pattern(hits) == "grandparent_emergency"
+
+
+def test_payment_soon_after_scam_contact_is_linked() -> None:
+    window = [msg(0, "IRS: a warrant for your arrest will be issued today. Pay by Bitcoin ATM.",
+                  kind=EventKind.TEXT_MESSAGE),
+              ev(EventKind.PURCHASE, 40, amount=3000, merchant="Bitcoin Depot ATM")]
+    link = next(h for h in rule_signals(window) if h.rule == "scam_contact_then_payment")
+    assert "40 minutes after" in link.detail
+    # Three hours later is no longer linked.
+    late = [window[0], ev(EventKind.PURCHASE, 300, amount=3000, merchant="Bitcoin Depot ATM")]
+    assert "scam_contact_then_payment" not in {h.rule for h in rule_signals(late)}
+
+
+def test_saved_contact_asking_for_gift_card_stays_quiet() -> None:
+    window = [msg(0, "Hi Mom, can you grab a $50 gift card for Emma's birthday?", sender="Your daughter",
+                  kind=EventKind.TEXT_MESSAGE, saved_contact=True),
+              ev(EventKind.PURCHASE, 60, amount=50, merchant="Target", description="Gift card")]
+    names = {h.rule for h in rule_signals(window)}
+    assert "scam_contact_then_payment" not in names
+    assert decide(assess("mom", window, DORMANT, use_llm=False)).tier is Tier.LOG
+
+
+def test_claude_reading_catches_a_message_without_keywords() -> None:
+    plain = msg(0, "Hi, it's me. Can you help me with something? I'll explain later.",
+                kind=EventKind.TEXT_MESSAGE)
+    assert not [h for h in rule_signals([plain]) if h.rule.startswith("message_")]
+    read = msg(0, plain.description, kind=EventKind.TEXT_MESSAGE,
+               classifier={"likelihood": 0.8, "tactics": ["secrecy"], "reason": "r"})
+    assert any(h.rule.startswith("message_") and h.weight >= 0.6 for h in rule_signals([read]))

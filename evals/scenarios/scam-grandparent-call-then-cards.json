@@ -1,0 +1,85 @@
+{
+  "id": "scam-grandparent-call-then-cards",
+  "label": "scam",
+  "pattern": "grandparent_emergency",
+  "expected_min_tier": "alert",
+  "notes": "A 'grandson' calls from jail, asks for secrecy and Google Play cards; she buys them 25 minutes later.",
+  "events": [
+    {
+      "kind": "call_transcript",
+      "offset_minutes": 0,
+      "counterparty": "Unknown caller (213) 555-0186",
+      "description": "Grandma? It's me, I'm in trouble. I was in an accident and the police arrested me."
+    },
+    {
+      "kind": "call_transcript",
+      "offset_minutes": 2,
+      "counterparty": "Unknown caller (213) 555-0186",
+      "description": "Please don't tell Mom and Dad, I'm so embarrassed."
+    },
+    {
+      "kind": "call_transcript",
+      "offset_minutes": 4,
+      "counterparty": "Unknown caller (213) 555-0186",
+      "description": "The lawyer says the court only takes Google Play gift cards. Can you go to CVS right now?"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 29,
+      "amount": 500,
+      "merchant": "CVS Pharmacy",
+      "description": "Google Play gift cards"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 4,
+      "amount": 64.2,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 6,
+      "amount": 22.5,
+      "merchant": "CVS Pharmacy",
+      "description": "Pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 9,
+      "amount": 58.1,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 12,
+      "amount": 120.0,
+      "counterparty": "SoCal Edison",
+      "description": "Electric bill"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 15,
+      "amount": 35.0,
+      "merchant": "Ocean View Salon",
+      "description": "Haircut"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 20,
+      "amount": 71.4,
+      "merchant": "Trader Joe's",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 25,
+      "amount": 950.0,
+      "counterparty": "Mesa Gardens HOA",
+      "description": "HOA dues"
+    }
+  ]
+}

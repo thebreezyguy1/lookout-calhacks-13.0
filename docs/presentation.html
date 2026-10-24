@@ -151,7 +151,7 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
   <header class="top">
     <div class="label">Cal Hacks 13.0 · Pitch brief</div>
     <h1>Look<span class="out">out</span> interrupts the scam while it's still happening.</h1>
-    <p class="lede">Other tools alert the family after the money is gone. Lookout spots the pattern, then talks with Mom, calmly, while the scammer is still on the phone.</p>
+    <p class="lede">Other tools alert the family after the money is gone. Lookout hears the scam in her texts and calls, sees the money move, and talks with Mom while the scammer is still on the phone.</p>
     <div class="meta">
       <span>Microsoft · Built for the Real World</span><span>Hyphenate</span><span>CRS</span><span>Capital One Nessie</span><span>Anthropic</span><span>Best People-First Hack</span>
     </div>
@@ -176,7 +176,7 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
   <section>
     <div class="label">What's new</div>
     <h2>The check-in is a conversation, and her answers are the strongest evidence</h2>
-    <p class="col">Watching accounts and alerting family already exists (EverSafe, Carefull, bank trusted-contact programs). What none of them do is step in during the scam. A transaction rule can only guess. "He said not to tell my daughter" is close to proof.</p>
+    <p class="col">Watching accounts and alerting family already exists (EverSafe, Carefull, bank trusted-contact programs), and phone makers now flag scam calls and texts. Nobody connects the two: the bank sees a $500 gift-card purchase, the phone sees a "don't tell your parents" call, and neither knows they happened 20 minutes apart. Lookout links the conversation to the money, then steps in. A transaction rule can only guess. "He said not to tell my daughter" is close to proof.</p>
     <div class="split">
       <div class="two" style="grid-template-columns:minmax(0,1fr)">
         <div class="box"><h3>Breaks the isolation</h3><p>One short question at a time: are you on the phone with them right now (it's fine to hang up), did they tell you to keep it secret, did they ask for gift cards or the numbers on the back, did they say a loved one is in trouble.</p></div>
@@ -228,6 +228,7 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
         <tr><td>Mom's credit baseline</td><td><span class="chip real">Live</span></td><td>CRS sandbox: P20 Dolores Whitcomb, 6 tradelines, 0 open, last new account 84 months ago, Fraud Finder 8/100. Detected as a dormant file.</td></tr>
         <tr><td>Identity check</td><td><span class="chip real">Live</span></td><td>All 3 bureaus plus Fraud Finder on any of the 20 CRS personas. P13 (synthetic identity) is flagged at 94%.</td></tr>
         <tr><td>Bank activity</td><td><span class="chip real">Live</span></td><td>Read-only Nessie sync. Lookout never calls an endpoint that moves money.</td></tr>
+        <tr><td>Texts and calls</td><td><span class="chip sim">Simulated</span></td><td>Mom's phone on the demo stage. Phones don't let third-party apps read texts or hear calls; the production path is an Android default-SMS app or forwarded texts, plus call state only (never audio).</td></tr>
         <tr><td>New suspicious events</td><td><span class="chip sim">Simulated</span></td><td>CRS personas never change, so new scam activity comes from the scenario injector. Every injected event is labeled <code>injector</code> on screen.</td></tr>
         <tr><td>Claude layer</td><td><span class="chip sim">Optional</span></td><td>Turns on with an Anthropic API key. Without it, everything runs on rules alone.</td></tr>
       </tbody>
@@ -272,15 +273,15 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
     <div class="split">
       <ol class="script">
         <li><div><strong>Pull Mom's real file.</strong> Dashboard → "Pull from CRS sandbox", P20. Point at "Dormant", 84 months, identity clear. <div class="t">0:00–0:30 · live CRS</div></div></li>
-        <li><div><strong>A quiet scam starts.</strong> Simulation panel → quiet gift cards → Inject, then Assess. One $600 prepaid card: "Family alerted" at 81%. A bank would probably let this through. <div class="t">0:30–1:00 · labeled as simulated</div></div></li>
-        <li><div><strong>Lookout talks with Mom.</strong> On her screen: "Someone asked me to." Then she types: "he's still on the phone, he said my grandson is in jail and not to tell my daughter." Lookout tells her it's OK to hang up. <div class="t">1:00–2:15 · the moment</div></div></li>
-        <li><div><strong>The family sees it live.</strong> The dashboard climbs to "Hold recommended" at 99%, with her words quoted as evidence. Approve the hold; Lookout tells the family what to do and never does it itself. Open the audit log. <div class="t">2:15–3:15</div></div></li>
+        <li><div><strong>A judge plays the scammer.</strong> Demo stage → "Grandparent in jail". Each line appears as a live caption on Mom's phone: an accident, "don't tell Mom and Dad", bail. Lookout reads each one (Claude: "97% likely a scam"). After two lines, a notification drops onto her phone. <div class="t">0:30–1:30 · simulated phone, labeled</div></div></li>
+        <li><div><strong>Lookout talks with Mom, mid-call.</strong> She taps the notification. Lookout asks about the call; she answers "I'm on the phone now". Lookout: "It's completely fine to hang up." <div class="t">1:30–2:30 · the moment</div></div></li>
+        <li><div><strong>The money moves anyway.</strong> Press "Mom buys $500 in Google Play cards". The panel jumps to "Hold recommended" at 99%, with the link highlighted: $500 at CVS minutes after the caller asked for secrecy. Approve the hold on the family dashboard and open the audit log. <div class="t">2:30–3:15</div></div></li>
         <li><div><strong>Identity theft on real data.</strong> Switch persona to P13. Flagged at 94% from an inquiry burst, a 9-day-old email and someone else's phone number. The recommendation becomes a credit freeze. <div class="t">3:15–4:00 · live CRS</div></div></li>
         <li><div><strong>The numbers.</strong> Blind holdout with Claude: 7/8 caught, 0/8 false alarms, with the misses named. Path to production on Azure. <div class="t">4:00–5:00</div></div></li>
       </ol>
       <div class="box">
         <h3>Setup</h3>
-        <p>Laptop with the family dashboard, a tablet with Mom's screen (<code>/app/mom.html</code>). Both update every 3 seconds.</p>
+        <p>Laptop with the demo stage (<code>/app/phone.html</code>: scammer console, Mom's phone, what Lookout sees) and the family dashboard in a second tab. Hand the scammer console to the judge, or let them type their own scam.</p>
         <p>With an Anthropic key set, Claude leads the conversation. Without one, or if the Wi-Fi drops, the scripted interview runs the same flow with no network.</p>
       </div>
     </div>
@@ -309,7 +310,8 @@ footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(-
         <tr><td>One container, in-memory store</td><td>Azure Container Apps (deploy script ready in <code>infra/azure/deploy.sh</code>) + Azure Database for PostgreSQL</td></tr>
         <tr><td>Keys in environment variables</td><td>Azure Key Vault</td></tr>
         <tr><td>Audit log in memory</td><td>Azure Monitor and Application Insights</td></tr>
-        <tr><td>Browser check-in conversation</td><td>Voice call or SMS, so Lookout can reach her while she's on the phone with the scammer; shared scam radar across families (payees and phone numbers seen in other cases)</td></tr>
+        <tr><td>Simulated phone</td><td>Android default-SMS app or forwarded texts; call state (unknown number, call length) without audio; the phone makers' own scam signals where they exist</td></tr>
+        <tr><td>Browser check-in conversation</td><td>Push notification or SMS that reaches her while she's on the phone with the scammer; shared scam radar across families (payees and phone numbers seen in other cases)</td></tr>
       </tbody>
     </table></div>
   </section>

@@ -88,8 +88,8 @@ Reports detection rate, false-alarm rate, normal check-in rate and median time-t
 
 | Eval | Caught | False alarms |
 |---|---|---|
-| Dev set (`evals/scenarios/`, 8 scam / 6 normal, written with the rules), rules only | 8/8 | 0/6 |
-| Dev set, rules + Claude | 7/8 | 0/6 |
+| Dev set (`evals/scenarios/`, 12 scam / 8 normal, written with the rules), rules only | 12/12 | 0/8 |
+| Dev set (before texts and calls: 8 scam / 6 normal), rules + Claude | 7/8 | 0/6 |
 | Blind holdout (`evals/holdout/`, 8 scam / 8 normal, not tuned against), rules only | 7/8 | 2/8 |
 | **Blind holdout, rules + Claude** | **7/8** | **0/8** |
 | Identity check on real CRS responses (20 personas) | 4/4 identity cases | 0/16 clean |
@@ -107,6 +107,18 @@ See [docs/deploy-azure.md](docs/deploy-azure.md): one script, `infra/azure/deplo
 ## Presentation
 
 [docs/presentation.html](docs/presentation.html) is the pitch brief: story, real vs. simulated, results, 5-minute demo script and path to production.
+
+## Demo stage: a scam as it happens
+
+Open http://localhost:8000/app/phone.html next to the family dashboard. Three panels:
+
+- **Scammer console** (simulated): pick a script (grandparent in jail, IRS warrant, Microsoft tech support, online sweetheart, or a normal text from her daughter) and send it line by line as texts or live call captions, or type your own. Buttons simulate Mom's bank activity (gift cards, cash, Bitcoin ATM, Zelle).
+- **Mom's phone**: a messages thread and a call screen with live captions. When Lookout gets worried, a notification drops in; tapping it opens the check-in conversation on the phone.
+- **What Lookout sees**: the tier, risk and signals, updating live.
+
+Each text or caption is read by keyword rules for scam tactics (secrecy, gift-card or crypto requests, urgency, a loved one in trouble, impersonation, tech support, prizes, requests for codes) and, when `ANTHROPIC_API_KEY` is set, by Claude (`agent/comms.py`). The link no bank or phone sees alone is rule `scam_contact_then_payment`: money moving within three hours of a scam contact. Saved contacts count for half.
+
+What's real vs. simulated: the phone is simulated and every message is labeled `injector`. Phones don't let third-party apps read texts or hear calls (iOS not at all; Android only as the default SMS app, and call audio is blocked). A production path is an Android default-SMS app or forwarded texts, plus call state only (never audio): "on a 40-minute call with an unknown number while buying gift cards" is a strong signal without recording anything.
 
 ## Responsible design
 

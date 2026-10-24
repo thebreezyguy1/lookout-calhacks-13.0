@@ -27,6 +27,44 @@ PRIZE = re.compile(r"prize|sweepstakes|lottery|winnings|fee\s*to\s*release|proce
 
 MONEY_KINDS = {EventKind.PURCHASE, EventKind.TRANSFER, EventKind.WITHDRAWAL}
 CREDIT_KINDS = {EventKind.CREDIT_INQUIRY, EventKind.NEW_CREDIT_ACCOUNT}
+COMMS_KINDS = {EventKind.TEXT_MESSAGE, EventKind.CALL_TRANSCRIPT}
+
+# Tactics scammers use in texts and calls. Each is (name, pattern, weight).
+TACTICS: list[tuple[str, re.Pattern, float]] = [
+    ("secrecy", re.compile(r"secret|don'?t tell|do not (tell|discuss)|between us|embarrass|"
+                           r"wouldn'?t understand|not discuss", re.IGNORECASE), 0.3),
+    ("payment_request", re.compile(r"gift\s*cards?|google\s*play|itunes|apple\s*card|steam\s*card|"
+                                   r"bitcoin|crypto|wallet|wire|western\s*union|moneygram|zelle|cash\s*app|"
+                                   r"venmo|courier|numbers on the back|codes?\b", re.IGNORECASE), 0.3),
+    ("urgency", re.compile(r"urgent|immediately|right now|right away|today|within \w+ hours?|hurry|"
+                           r"or else|before it'?s too late|you have \d+ hours?", re.IGNORECASE), 0.15),
+    ("family_emergency", FAMILY_EMERGENCY, 0.25),
+    # The caller claims to BE an authority. "The police arrested me" is a family emergency, not this.
+    ("authority", re.compile(r"\birs\b|warrant|social security|medicare|sheriff|federal agent|back taxes|"
+                             r"tax debt|court fine|fraud dep(artment|t)\b|security (team|department)|"
+                             r"this is (the )?(police|fbi|bank|irs)", re.IGNORECASE), 0.25),
+    ("romance", re.compile(r"my love|darling|sweetheart|miss you|thinking about you|stuck (at|in) the|"
+                           r"customs is holding|oil rig|deployed overseas", re.IGNORECASE), 0.2),
+    ("tech_support", REMOTE_ACCESS, 0.3),
+    ("prize", PRIZE, 0.25),
+    ("credential_request", re.compile(r"verify your account|one[- ]time code|code we (just )?sent|"
+                                      r"password|\bpin\b|social security number|account number|"
+                                      r"click (this|the) link|https?://", re.IGNORECASE), 0.3),
+]
+# Which tactic names the scam, in priority order, for the rule name and the pattern guess.
+TACTIC_PATTERN = [("tech_support", "tech_support_scam"), ("family_emergency", "grandparent_emergency"),
+                  ("authority", "government_impersonation"), ("prize", "prize_scam"),
+                  ("romance", "romance_scam"),
+                  ("credential_request", "payee_scam"), ("payment_request", "gift_card_scam"),
+                  ("secrecy", "romance_scam")]
+
+
+def message_tactics(e: Event) -> list[str]:
+    """Scam tactics in a text or call caption: keyword rules plus Claude's tags when present."""
+    text = e.description or ""
+    found = [name for name, pattern, _ in TACTICS if pattern.search(text)]
+    found += [t for t in (e.raw.get("classifier") or {}).get("tactics", []) if t not in found]
+    return found
 
 
 def _text(e: Event) -> str:
@@ -76,7 +114,7 @@ def rule_signals(window: list[Event], baseline: Baseline | None = None,
                             detail=f"${total:,.0f} sent via crypto ATM or wire service"))
 
     # 3. Tech-support scam fingerprints.
-    remote = [e for e in window if REMOTE_ACCESS.search(_text(e))]
+    remote = [e for e in window if e.kind not in COMMS_KINDS and REMOTE_ACCESS.search(_text(e))]
     if remote:
         hits.append(RuleHit(rule="remote_access_or_tech_support", weight=0.5,
                             event_ids=[e.id for e in remote],
@@ -90,7 +128,8 @@ def rule_signals(window: list[Event], baseline: Baseline | None = None,
          "Memo mentions the IRS, police, a warrant or a government agency"),
         ("prize_fee", PRIZE, "Memo mentions a prize, sweepstakes or a fee to release winnings"),
     ):
-        matched = [e for e in window if e.description and pattern.search(e.description)]
+        matched = [e for e in window if e.kind not in COMMS_KINDS
+                   and e.description and pattern.search(e.description)]
         if matched:
             hits.append(RuleHit(rule=rule, weight=0.4, event_ids=[e.id for e in matched], detail=detail))
 
@@ -154,7 +193,61 @@ def rule_signals(window: list[Event], baseline: Baseline | None = None,
                             event_ids=[e.id for e in risky_checks],
                             detail="Contact details used with this identity score high-risk on Fraud Finder"))
 
+    # 11. Scam language in texts and calls, per sender. Saved contacts count for half.
+    comms = [e for e in window if e.kind in COMMS_KINDS]
+    known_senders = {e.counterparty for e in history if e.kind in COMMS_KINDS and e.counterparty}
+    suspicious: list[tuple[str, list[Event], list[str]]] = []
+    worst = None
+    for sender in dict.fromkeys(e.counterparty or "unknown sender" for e in comms):
+        msgs = [e for e in comms if (e.counterparty or "unknown sender") == sender]
+        tactics = list(dict.fromkeys(t for e in msgs for t in message_tactics(e)))
+        weights = {name: w for name, _, w in TACTICS}
+        score = combine([RuleHit(rule=t, weight=weights.get(t, 0.2), detail="") for t in tactics])
+        likelihood = max(((e.raw.get("classifier") or {}).get("likelihood") or 0) for e in msgs)
+        score = max(score, 0.8 * likelihood)
+        known = sender in known_senders or any(e.raw.get("saved_contact") for e in msgs)
+        if known:
+            score *= 0.5
+        if not known and (len(tactics) >= 2 or likelihood >= 0.6):
+            suspicious.append((sender, msgs, tactics))
+        if score >= 0.2 and (worst is None or score > worst[0]):
+            worst = (score, sender, msgs, tactics)
+    if worst:
+        score, sender, msgs, tactics = worst
+        lead = next((t for t, _ in TACTIC_PATTERN if t in tactics), "contact")
+        channel = "Call" if any(e.kind is EventKind.CALL_TRANSCRIPT for e in msgs) else "Texts"
+        hits.append(RuleHit(rule=f"message_{lead}", weight=round(min(0.8, score), 2),
+                            event_ids=[e.id for e in msgs],
+                            detail=f"{channel} from {sender}: " + ", ".join(TACTIC_LABELS.get(t, t) for t in tactics)))
+
+    # 12. The link no bank or phone can see alone: money moves soon after a scam contact.
+    for sender, msgs, tactics in suspicious:
+        start = min(e.occurred_at for e in msgs)
+        paid = [e for e in money if start <= e.occurred_at <= start + timedelta(hours=3)]
+        if paid:
+            first = min(paid, key=lambda e: e.occurred_at)
+            minutes = max(0, round((first.occurred_at - start).total_seconds() / 60))
+            what = f"${first.amount:,.0f}" + (f" at {first.merchant}" if first.merchant else "")
+            hits.append(RuleHit(rule="scam_contact_then_payment", weight=0.7,
+                                event_ids=[e.id for e in paid + msgs],
+                                detail=f"{what} {minutes} minute{'' if minutes == 1 else 's'} after {sender} "
+                                       + ", ".join(TACTIC_LABELS.get(t, t) for t in tactics[:2])))
+            break
+
     return hits
+
+
+TACTIC_LABELS = {
+    "secrecy": "asked her to keep it secret",
+    "payment_request": "asked for gift cards, crypto or a wire",
+    "urgency": "pressured her to act now",
+    "family_emergency": "said a loved one is in trouble",
+    "authority": "claimed to be a bank or government agency",
+    "tech_support": "claimed to be tech support",
+    "prize": "promised a prize",
+    "romance": "is an online sweetheart asking for money",
+    "credential_request": "asked for codes or account details",
+}
 
 
 def combine(hits: list[RuleHit]) -> float:
@@ -176,6 +269,10 @@ def guess_pattern(hits: list[RuleHit]) -> str | None:
         return None
     if names & IDENTITY_RULES:
         return "identity_theft"
+    message_rules = [n for n in names if n.startswith("message_")]
+    if message_rules:   # what the caller said names the scam better than how the money moved
+        tactic = message_rules[0].removeprefix("message_")
+        return dict(TACTIC_PATTERN).get(tactic, "unusual_activity")
     if "remote_access_or_tech_support" in names:
         return "tech_support_scam"
     if "urgency_authority" in names:

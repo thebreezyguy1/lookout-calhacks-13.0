@@ -2,6 +2,7 @@
 
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +14,10 @@ from app.agent.baseline import build_baseline
 from app.agent.identity import identity_level, identity_signals
 from app.agent.policy import decide
 from app.agent.conversation import SIGNALS as CONVERSATION_SIGNALS
-from app.agent.conversation import Conversation, conversation_hits, parent_answer, take_turn
+from app.agent.comms import classify_message
+from app.agent.conversation import Conversation, conversation_hits, is_money, parent_answer, take_turn
 from app.agent.risk import assess, assess_identity, escalate_from_conversation
+from app.agent.rules import message_tactics
 from app.config import settings
 from app.integrations.crs import CREDIT_REPORT_PATHS, CRSClient, CRSError, load_personas
 from app.integrations.nessie_events import fetch_events
@@ -127,12 +130,90 @@ class EventIn(BaseModel):
 
 
 @app.post("/people/{person_id}/events", response_model=list[Event])
-def add_events(person_id: str, events: list[EventIn]) -> list[Event]:
-    """Manually add events (marked as injected)."""
+def add_events(person_id: str, events: list[EventIn], auto_assess: bool = False) -> list[Event]:
+    """Manually add events (marked as injected). With auto_assess, re-assess right away."""
     created = [Event(person_id=person_id, source=EventSource.INJECTOR,
                      **e.model_dump(exclude_none=True)) for e in events]
     store.add_events(created)
+    if auto_assess:
+        _auto_assess(person_id, trigger="events")
     return created
+
+
+# ---------- Texts and calls (demo phone; simulated) ----------
+
+TIER_ORDER = [Tier.LOG, Tier.CHECK_IN, Tier.ALERT, Tier.RECOMMEND_HOLD]
+
+
+def _auto_assess(person_id: str, trigger: str) -> Decision | None:
+    """Re-assess after a new event (rules only, for speed) and record a decision only if things got worse.
+
+    If Mom is already talking with Lookout, what she said is kept in the new assessment, and the
+    decision joins that conversation instead of opening a new check-in on her screen.
+    """
+    now = datetime.now(timezone.utc)
+    window = store.window(person_id, settings.risk_window_hours, now)
+    history = store.history(person_id, settings.risk_window_hours, now)
+    assessment = assess(person_id, window, store.baselines.get(person_id), history, use_llm=False)
+    latest = next(iter(list_decisions(person_id)), None)
+    origin_id = (latest.conversation_of or latest.id) if latest else None
+    conv = store.conversations.get(origin_id) if origin_id else None
+    if conv and conv.signals:
+        quotes = [m.text for m in conv.messages if m.role == "parent"]
+        assessment = escalate_from_conversation(assessment, conversation_hits(conv.signals), quotes)
+    decision = decide(assessment)
+
+    if decision.tier is Tier.LOG:
+        return None
+    if latest:
+        worse = TIER_ORDER.index(decision.tier) > TIER_ORDER.index(latest.tier)
+        new_evidence = bool(set(assessment.rule_hits) - set(latest.assessment.rule_hits)) \
+            and TIER_ORDER.index(decision.tier) == TIER_ORDER.index(latest.tier)
+        if not (worse or new_evidence):
+            return None
+    if conv and not conv.done:
+        decision.conversation_of = conv.decision_id
+        conv.escalations.append(decision.id)
+    store.decisions[decision.id] = decision
+    store.log(person_id, "assessed", decision_id=decision.id, tier=decision.tier.value,
+              risk=assessment.risk_score, confidence=assessment.confidence, pattern=assessment.pattern,
+              rules=assessment.rule_hits, engine=assessment.engine, events=len(window), kind=f"auto:{trigger}")
+    return decision
+
+
+class CommsIn(BaseModel):
+    channel: Literal["sms", "call"]
+    sender: str
+    text: str
+    saved_contact: bool = False   # sender is in Mom's contacts
+    use_llm: bool = True
+
+
+@app.post("/people/{person_id}/comms")
+def receive_comms(person_id: str, body: CommsIn) -> dict:
+    """A text or call caption reaching Mom's phone. In the demo these come from the scammer console.
+
+    Labeled source=injector: a real deployment would get them from an Android default-SMS app,
+    forwarded texts, or call state only (never call audio).
+    """
+    if not body.text.strip():
+        raise HTTPException(400, "Empty message")
+    kind = EventKind.CALL_TRANSCRIPT if body.channel == "call" else EventKind.TEXT_MESSAGE
+    earlier = [e.description or "" for e in store.events.get(person_id, [])
+               if e.kind == kind and e.counterparty == body.sender]
+    read = classify_message(body.text, body.channel, body.sender, earlier) if body.use_llm else None
+    event = Event(person_id=person_id, source=EventSource.INJECTOR, kind=kind, counterparty=body.sender,
+                  description=body.text.strip()[:1000],
+                  raw={"channel": body.channel, "saved_contact": body.saved_contact,
+                       "classifier": read.model_dump() if read else None})
+    store.add_events([event])
+    store.log(person_id, "message_received", channel=body.channel, sender=body.sender,
+              tactics=message_tactics(event), likelihood=read.likelihood if read else None,
+              reason=read.reason if read else None)
+    decision = _auto_assess(person_id, trigger=body.channel)
+    return {"event": event.model_dump(mode="json"), "tactics": message_tactics(event),
+            "classifier": read.model_dump() if read else None,
+            "decision": decision.model_dump(mode="json") if decision else None}
 
 
 @app.get("/people/{person_id}/events", response_model=list[Event])
@@ -286,14 +367,16 @@ def converse(decision_id: str, body: TurnIn) -> dict:
         raise HTTPException(404, "Unknown decision")
     origin = store.decisions.get(decision.conversation_of) if decision.conversation_of else decision
     person_id = origin.assessment.person_id
-    conv = store.conversations.get(origin.id) or Conversation(decision_id=origin.id, person_id=person_id)
+    by_id = {e.id: e for e in store.events.get(person_id, [])}
+    events = sorted((by_id[i] for i in origin.assessment.event_ids if i in by_id), key=lambda e: e.occurred_at)
+    conv = store.conversations.get(origin.id) or Conversation(
+        decision_id=origin.id, person_id=person_id,
+        step="start" if any(is_money(e) for e in events) else "start_comms")
     if body.message is None and conv.messages:
         return _conversation_view(conv)
     if body.message is not None and not body.message.strip():
         raise HTTPException(400, "Empty message")
 
-    by_id = {e.id: e for e in store.events.get(person_id, [])}
-    events = sorted((by_id[i] for i in origin.assessment.event_ids if i in by_id), key=lambda e: e.occurred_at)
     learned = take_turn(conv, body.message, events)
     store.conversations[origin.id] = conv
     store.log(person_id, "conversation_turn", decision_id=origin.id, source=conv.messages[-1].source,
@@ -301,7 +384,9 @@ def converse(decision_id: str, body: TurnIn) -> dict:
 
     if any(s in CONVERSATION_SIGNALS for s in learned):
         quotes = [m.text for m in conv.messages if m.role == "parent"]
-        assessment = escalate_from_conversation(origin.assessment, conversation_hits(conv.signals), quotes)
+        # Build on the newest decision in this conversation, which may include a payment made since.
+        newest = max([origin, *(store.decisions[i] for i in conv.escalations)], key=lambda d: d.created_at)
+        assessment = escalate_from_conversation(newest.assessment, conversation_hits(conv.signals), quotes)
         new = decide(assessment)
         new.conversation_of = origin.id
         store.decisions[new.id] = new

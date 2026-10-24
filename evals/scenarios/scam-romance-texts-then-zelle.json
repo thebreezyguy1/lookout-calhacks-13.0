@@ -1,0 +1,85 @@
+{
+  "id": "scam-romance-texts-then-zelle",
+  "label": "scam",
+  "pattern": "romance_scam",
+  "expected_min_tier": "alert",
+  "notes": "An online sweetheart asks for $1,500 by Zelle and secrecy; she adds him and pays.",
+  "events": [
+    {
+      "kind": "text_message",
+      "offset_minutes": 0,
+      "counterparty": "Daniel",
+      "description": "I'm stuck at the port in Lagos, customs is holding my shipment. I need $1,500 to release it."
+    },
+    {
+      "kind": "text_message",
+      "offset_minutes": 5,
+      "counterparty": "Daniel",
+      "description": "Please send it by Zelle today, and keep this between us. Your kids wouldn't understand."
+    },
+    {
+      "kind": "new_payee",
+      "offset_minutes": 40,
+      "counterparty": "Daniel M.",
+      "description": "New Zelle payee"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 42,
+      "amount": 1500,
+      "counterparty": "Daniel M.",
+      "description": "Zelle"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 4,
+      "amount": 64.2,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 6,
+      "amount": 22.5,
+      "merchant": "CVS Pharmacy",
+      "description": "Pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 9,
+      "amount": 58.1,
+      "merchant": "Safeway",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 12,
+      "amount": 120.0,
+      "counterparty": "SoCal Edison",
+      "description": "Electric bill"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 15,
+      "amount": 35.0,
+      "merchant": "Ocean View Salon",
+      "description": "Haircut"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 20,
+      "amount": 71.4,
+      "merchant": "Trader Joe's",
+      "description": "Groceries"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 25,
+      "amount": 950.0,
+      "counterparty": "Mesa Gardens HOA",
+      "description": "HOA dues"
+    }
+  ]
+}
