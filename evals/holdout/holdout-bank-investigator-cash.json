@@ -1,0 +1,110 @@
+{
+  "id": "holdout-bank-investigator-cash",
+  "label": "scam",
+  "pattern": "government_impersonation",
+  "expected_min_tier": "alert",
+  "notes": "A caller posing as a bank fraud investigator tells her a teller is stealing and asks her to withdraw cash and hand it to a 'courier' in a sealed envelope.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "withdrawal",
+      "offset_minutes": 0,
+      "amount": 4000.0,
+      "merchant": "Branch teller",
+      "category": "cash",
+      "description": "Teller cash withdrawal"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 45,
+      "amount": 3.29,
+      "merchant": "Staples",
+      "category": "office supplies",
+      "description": "Envelopes"
+    },
+    {
+      "kind": "withdrawal",
+      "offset_minutes": 1410,
+      "amount": 3500.0,
+      "merchant": "Branch teller",
+      "category": "cash",
+      "description": "Teller cash withdrawal"
+    },
+    {
+      "kind": "withdrawal",
+      "offset_minutes": 1470,
+      "amount": 800.0,
+      "merchant": "ATM 4th St",
+      "category": "cash",
+      "description": "ATM withdrawal"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 86.42,
+      "offset_minutes": 5,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

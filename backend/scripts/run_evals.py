@@ -3,6 +3,7 @@
 Usage (from backend/):
     python -m scripts.run_evals          # rules only (offline, deterministic)
     python -m scripts.run_evals --llm    # rules + Claude (needs ANTHROPIC_API_KEY)
+    python -m scripts.run_evals --set holdout   # blind scenarios written without seeing the rules
 
 Each scenario is replayed one event at a time, the way events arrive in real life.
 Metrics:
@@ -21,10 +22,11 @@ from statistics import median
 from app.agent.policy import decide
 from app.agent.risk import assess
 from app.models import Baseline, Tier
-from app.scenarios import load_scenarios, to_events
+from app.scenarios import SCENARIOS_DIR, load_scenarios, to_events
 
 ORDER = [Tier.LOG, Tier.CHECK_IN, Tier.ALERT, Tier.RECOMMEND_HOLD]
 RESULTS_DIR = Path(__file__).resolve().parents[2] / "evals" / "results"
+SETS = {"dev": SCENARIOS_DIR, "holdout": SCENARIOS_DIR.parent / "holdout"}
 
 
 def rank(tier: Tier) -> int:
@@ -43,10 +45,10 @@ def baseline_for(dormant: bool) -> Baseline:
                     dormant_file=False)
 
 
-def run(use_llm: bool) -> dict:
+def run(use_llm: bool, scenario_set: str = "dev") -> dict:
     now = datetime.now(timezone.utc)
     rows = []
-    for s in load_scenarios():
+    for s in load_scenarios(SETS[scenario_set]):
         window, history = to_events(s, "eval", now=now)
         baseline = baseline_for(s.dormant_file)
         expected = Tier(s.expected_min_tier) if s.expected_min_tier else Tier.ALERT
@@ -75,6 +77,7 @@ def run(use_llm: bool) -> dict:
     times = [r["minutes_to_detect"] for r in scams if r["minutes_to_detect"] is not None]
     summary = {
         "engine": "rules+llm" if use_llm else "rules",
+        "set": scenario_set,
         "scenarios": len(rows),
         "detection_rate": round(sum(r["detected"] for r in scams) / len(scams), 3) if scams else None,
         "false_alarm_rate": round(sum(r["false_alarm"] for r in normals) / len(normals), 3) if normals else None,
@@ -87,8 +90,10 @@ def run(use_llm: bool) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--llm", action="store_true", help="include Claude (needs ANTHROPIC_API_KEY)")
+    parser.add_argument("--set", choices=list(SETS), default="dev",
+                        help="dev: scenarios written with the rules; holdout: written blind")
     args = parser.parse_args()
-    result = run(args.llm)
+    result = run(args.llm, args.set)
 
     print(f"{'scenario':32} {'label':7} {'expected':15} {'got':15} {'risk':>5}  pattern")
     for r in result["rows"]:
@@ -102,7 +107,7 @@ def main() -> None:
     print("\nSummary:", json.dumps(result["summary"], indent=2))
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    out = RESULTS_DIR / f"evals_{result['summary']['engine']}.json"
+    out = RESULTS_DIR / f"evals_{result['summary']['set']}_{result['summary']['engine']}.json"
     out.write_text(json.dumps(result, indent=2, default=str))
     print(f"Saved {out.relative_to(RESULTS_DIR.parents[1])}")
 

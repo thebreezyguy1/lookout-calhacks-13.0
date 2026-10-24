@@ -10,7 +10,7 @@ How the two combine (kept simple so it can be explained to a judge):
 
 from app.agent.llm import llm_assess
 from app.agent.rules import combine, guess_pattern, rule_signals, rules_confidence
-from app.models import Assessment, Baseline, Event
+from app.models import Assessment, Baseline, Event, RuleHit
 
 LLM_WEIGHT = 0.6
 MAX_LLM_DISCOUNT = 0.15
@@ -20,6 +20,32 @@ def _rules_summary(hits) -> str:
     if not hits:
         return "No scam signals in this window."
     return "Signals: " + "; ".join(h.detail for h in hits) + "."
+
+
+def assess_identity(person_id: str, hits: list[RuleHit]) -> Assessment:
+    """Turn identity signals from the credit file into an assessment for the action policy.
+
+    Kept separate from `assess` so a risky file isn't counted again on every window.
+    """
+    score = combine(hits)
+    summary = ("Identity check on her credit file. " + _rules_summary(hits)) if hits else ""
+    return Assessment(
+        person_id=person_id,
+        event_ids=[],
+        risk_score=score,
+        confidence=rules_confidence(hits),
+        pattern="identity_theft" if hits else None,
+        rule_hits=[h.rule for h in hits],
+        signals=hits,
+        reasoning=summary,
+        family_summary=summary,
+        parent_message=(
+            "Hi, it's Lookout. Your credit file shows signs that someone else may be using your name "
+            "or details. You haven't done anything wrong. Have you applied for any new credit recently?"
+            if hits else ""
+        ),
+        engine="rules",
+    )
 
 
 def assess(person_id: str, window: list[Event], baseline: Baseline | None = None,

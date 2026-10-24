@@ -1,0 +1,100 @@
+{
+  "id": "holdout-zelle-new-friend",
+  "label": "scam",
+  "pattern": "romance_scam",
+  "expected_min_tier": "check_in",
+  "notes": "A man she met on a Facebook group asks for help with a 'customs fee'; she adds him on Zelle and sends two growing payments with bland memos.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "new_payee",
+      "offset_minutes": 0,
+      "counterparty": "Daniel Hartwell",
+      "description": "Zelle recipient added"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 12,
+      "amount": 1500.0,
+      "counterparty": "Daniel Hartwell",
+      "category": "p2p",
+      "description": "Zelle - thanks"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 1530,
+      "amount": 2800.0,
+      "counterparty": "Daniel Hartwell",
+      "category": "p2p",
+      "description": "Zelle - as we discussed"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 86.42,
+      "offset_minutes": 5,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

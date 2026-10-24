@@ -1,0 +1,96 @@
+{
+  "id": "holdout-western-union-family",
+  "label": "normal",
+  "notes": "Her monthly Western Union transfer to her sister in Guadalajara, same amount and recipient as every month.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "transfer",
+      "offset_minutes": 0,
+      "amount": 250.0,
+      "merchant": "Western Union",
+      "counterparty": "Rosa Alvarez",
+      "category": "money transfer",
+      "description": "Western Union - monthly"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 30,
+      "amount": 250.0,
+      "merchant": "Western Union",
+      "counterparty": "Rosa Alvarez",
+      "category": "money transfer",
+      "description": "Western Union - monthly"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 59,
+      "amount": 250.0,
+      "merchant": "Western Union",
+      "counterparty": "Rosa Alvarez",
+      "category": "money transfer",
+      "description": "Western Union - monthly"
+    }
+  ]
+}

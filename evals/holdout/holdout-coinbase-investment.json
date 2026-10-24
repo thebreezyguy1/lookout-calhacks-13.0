@@ -1,0 +1,108 @@
+{
+  "id": "holdout-coinbase-investment",
+  "label": "scam",
+  "pattern": "crypto_or_wire_scam",
+  "expected_min_tier": "alert",
+  "notes": "A 'financial mentor' from a texting app coaches her into funding a Coinbase account over two days and forwarding the crypto to a fake trading platform.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "new_payee",
+      "offset_minutes": 0,
+      "counterparty": "Coinbase Inc",
+      "description": "External account linked"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 30,
+      "amount": 2000.0,
+      "counterparty": "Coinbase Inc",
+      "category": "investment",
+      "description": "ACH transfer to Coinbase"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 1500,
+      "amount": 5000.0,
+      "counterparty": "Coinbase Inc",
+      "category": "investment",
+      "description": "ACH transfer to Coinbase"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 2820,
+      "amount": 8000.0,
+      "counterparty": "Coinbase Inc",
+      "category": "investment",
+      "description": "ACH transfer to Coinbase"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 86.42,
+      "offset_minutes": 5,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

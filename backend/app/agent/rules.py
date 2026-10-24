@@ -59,13 +59,13 @@ def rule_signals(window: list[Event], baseline: Baseline | None = None,
         weight = 0.35 if total < 200 else 0.55 if total < 500 else 0.7
         hits.append(RuleHit(rule="gift_card_purchases", weight=weight, event_ids=[e.id for e in gift],
                             detail=f"${total:,.0f} in gift cards across {len(stores) or 1} store(s)"))
-        for group in _within(gift, hours=24):
-            if len({e.merchant for e in group}) >= 2:
-                hits.append(RuleHit(rule="gift_cards_multiple_stores_24h", weight=0.6,
-                                    event_ids=[e.id for e in group],
-                                    detail=f"Gift cards bought at {len({e.merchant for e in group})} "
-                                           f"different stores within 24 hours"))
-                break
+        # Report the 24h group with the most distinct stores, not the first one that reaches two.
+        group = max(_within(gift, hours=24), key=lambda g: len({e.merchant for e in g}))
+        if len({e.merchant for e in group}) >= 2:
+            hits.append(RuleHit(rule="gift_cards_multiple_stores_24h", weight=0.6,
+                                event_ids=[e.id for e in group],
+                                detail=f"Gift cards bought at {len({e.merchant for e in group})} "
+                                       f"different stores within 24 hours"))
 
     # 2. Crypto ATMs and wire services: irreversible, favored by scammers.
     crypto = [e for e in money if CRYPTO_OR_WIRE.search(_text(e))]

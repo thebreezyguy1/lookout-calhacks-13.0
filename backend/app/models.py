@@ -60,6 +60,10 @@ class Baseline(BaseModel):
     dormant_file: bool = False
     bureau_errors: list[str] = Field(default_factory=list)
     request_ids: list[str] = Field(default_factory=list)
+    # Identity check across all bureaus + Fraud Finder (agent/identity.py)
+    identity_score: float = 0.0
+    identity_level: str = "clear"       # "clear", "watch" or "flag"
+    identity_signals: list["RuleHit"] = Field(default_factory=list)
     built_at: datetime = Field(default_factory=_now)
 
 
@@ -117,4 +121,5 @@ class ParentAnswer(str, Enum):
     SOMEONE_ASKED = "someone_asked"
 
 
+Baseline.model_rebuild()
 Decision.model_rebuild()

@@ -1,0 +1,321 @@
+<title>Lookout Pitch Brief</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (~68ch) with full-width tables; the tier ladder is the one visual set piece.
+   Palette follows the product's own dashboard (frontend/styles.css): warm paper neutrals, deep pine accent,
+   and the four escalation-tier colors used as semantic state, never as decoration. */
+:root {
+  color-scheme: light;
+  --paper: #f6f5f1;
+  --sheet: #ffffff;
+  --sheet-2: #efede6;
+  --rule: #e0ddd3;
+  --ink: #1d1c19;
+  --ink-2: #5f5b51;
+  --pine: #2f5d50;
+  --pine-ink: #ffffff;
+  --t-log: #6b675d;    --t-log-bg: #ecebe6;
+  --t-check: #8a5a00;  --t-check-bg: #fbf0d9;
+  --t-alert: #b0451c;  --t-alert-bg: #fbe6dc;
+  --t-hold: #a3172f;   --t-hold-bg: #f9dde2;
+  --good: #2f6b3a;     --good-bg: #e2f1e4;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --s-1: 13px; --s-2: 15px; --s-3: 17px; --s-4: 22px; --s-5: 30px; --s-6: clamp(38px, 6vw, 58px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #161614; --sheet: #1f1e1b; --sheet-2: #2a2925; --rule: #36342f;
+    --ink: #edebe4; --ink-2: #a8a499; --pine: #7fb8a5; --pine-ink: #10201b;
+    --t-log: #a39f94;   --t-log-bg: #2a2925;
+    --t-check: #f0c063; --t-check-bg: #3a2f17;
+    --t-alert: #f2946c; --t-alert-bg: #3d2318;
+    --t-hold: #f5899b;  --t-hold-bg: #3f1a22;
+    --good: #8fd19a;    --good-bg: #1d3322;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #161614; --sheet: #1f1e1b; --sheet-2: #2a2925; --rule: #36342f;
+  --ink: #edebe4; --ink-2: #a8a499; --pine: #7fb8a5; --pine-ink: #10201b;
+  --t-log: #a39f94;   --t-log-bg: #2a2925;
+  --t-check: #f0c063; --t-check-bg: #3a2f17;
+  --t-alert: #f2946c; --t-alert-bg: #3d2318;
+  --t-hold: #f5899b;  --t-hold-bg: #3f1a22;
+  --good: #8fd19a;    --good-bg: #1d3322;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 var(--s-3)/1.6 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.page { max-width: 880px; margin: 0 auto; padding-block: 48px 96px; display: grid; gap: 64px; }
+.col { max-width: 68ch; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.015em; }
+h1 { font-size: var(--s-6); line-height: 1.02; font-weight: 700; }
+h1 .out { color: var(--pine); }
+h2 { font-size: var(--s-5); line-height: 1.15; font-weight: 700; }
+h3 { font-size: var(--s-4); line-height: 1.25; font-weight: 500; }
+p { margin: 0; }
+section { display: grid; gap: 20px; }
+.label { font: 600 var(--s-1)/1.2 var(--f-body); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-2); }
+.lede { font-size: var(--s-4); line-height: 1.45; color: var(--ink); max-width: 34ch; font-family: var(--f-display); font-weight: 500; }
+.muted { color: var(--ink-2); }
+code, .mono { font-family: var(--f-mono); font-size: .88em; }
+a { color: var(--pine); }
+:focus-visible { outline: 3px solid var(--pine); outline-offset: 2px; }
+
+/* Header */
+header.top { display: grid; gap: 22px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--ink-2); font-size: var(--s-2); }
+.pitch { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 20px 22px; display: grid; gap: 10px; }
+.pitch p { font-size: var(--s-3); }
+
+/* The moment: a three-row receipt */
+.receipt { border: 1px solid var(--rule); border-radius: 12px; background: var(--sheet); overflow: hidden; }
+.receipt .row { display: grid; grid-template-columns: 84px minmax(0,1fr) auto; gap: 14px; padding: 12px 18px; border-top: 1px solid var(--rule); align-items: baseline; }
+.receipt .row:first-child { border-top: 0; }
+.receipt time, .receipt .amt { font-family: var(--f-mono); font-size: var(--s-2); font-variant-numeric: tabular-nums; }
+.receipt .amt { text-align: right; }
+.receipt .memo { color: var(--ink-2); font-size: var(--s-2); }
+.receipt .verdict { background: var(--t-hold-bg); color: var(--t-hold); font-weight: 600; grid-template-columns: 1fr; }
+
+/* Tier ladder: the set piece */
+.ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.step { border-radius: 12px; padding: 16px; display: grid; gap: 8px; align-content: start; }
+.step .name { font-family: var(--f-mono); font-size: var(--s-1); font-weight: 500; }
+.step h3 { font-size: var(--s-3); font-weight: 700; font-family: var(--f-body); letter-spacing: 0; }
+.step p { font-size: var(--s-2); line-height: 1.45; }
+.step .at { font-family: var(--f-mono); font-size: var(--s-1); opacity: .9; }
+.step.log { background: var(--t-log-bg); color: var(--t-log); min-height: 170px; }
+.step.check { background: var(--t-check-bg); color: var(--t-check); min-height: 200px; }
+.step.alert { background: var(--t-alert-bg); color: var(--t-alert); min-height: 230px; }
+.step.hold { background: var(--t-hold-bg); color: var(--t-hold); min-height: 260px; outline: 2px solid var(--t-hold); outline-offset: -2px; }
+.step p, .step h3 { color: var(--ink); }
+@media (max-width: 680px) {
+  .ladder { grid-template-columns: minmax(0, 1fr); }
+  .step.log, .step.check, .step.alert, .step.hold { min-height: 0; }
+}
+
+/* Pipeline */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.flow > div { background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; display: grid; gap: 6px; align-content: start; }
+.flow b { font-family: var(--f-display); font-size: var(--s-3); font-weight: 700; }
+.flow span { font-size: var(--s-2); color: var(--ink-2); line-height: 1.45; }
+@media (max-width: 680px) { .flow { grid-template-columns: minmax(0, 1fr); } }
+
+/* Tables */
+.tw { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; background: var(--sheet); }
+table { border-collapse: collapse; width: 100%; font-size: var(--s-2); }
+th, td { text-align: left; padding: 11px 14px; border-top: 1px solid var(--rule); vertical-align: top; }
+thead th { border-top: 0; font-size: var(--s-1); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); font-weight: 600; background: var(--sheet-2); }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--s-1); font-weight: 600; white-space: nowrap; }
+.chip.real { background: var(--good-bg); color: var(--good); }
+.chip.sim { background: var(--t-check-bg); color: var(--t-check); }
+.chip.miss { background: var(--t-hold-bg); color: var(--t-hold); }
+
+/* Lists */
+ol.script { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 14px; }
+ol.script li { counter-increment: s; display: grid; grid-template-columns: 52px minmax(0,1fr); gap: 12px; }
+ol.script li::before { content: counter(s); font-family: var(--f-display); font-weight: 700; font-size: var(--s-4); color: var(--pine); line-height: 1.2; }
+ol.script .t { font-family: var(--f-mono); font-size: var(--s-1); color: var(--ink-2); }
+ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 680px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.box { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px; display: grid; gap: 10px; align-content: start; }
+.box h3 { font-size: var(--s-3); font-family: var(--f-body); font-weight: 600; letter-spacing: 0; }
+.box p, .box li { font-size: var(--s-2); }
+
+/* Mom's screen mock */
+.momcard { background: var(--sheet); border: 2px solid var(--rule); border-radius: 16px; padding: 22px; display: grid; gap: 12px; max-width: 440px; }
+.momcard .q { font-family: var(--f-display); font-weight: 700; font-size: var(--s-4); line-height: 1.2; }
+.momcard .b { border: 2px solid; border-radius: 12px; padding: 10px 14px; font-weight: 700; font-size: var(--s-3); }
+.momcard .b.y { color: var(--good); } .momcard .b.n { color: var(--t-alert); } .momcard .b.a { color: var(--t-hold); }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 24px; align-items: start; }
+@media (max-width: 760px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+footer { color: var(--ink-2); font-size: var(--s-1); border-top: 1px solid var(--rule); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { a { transition: color .15s; } }
+</style>
+
+<div class="page">
+  <header class="top">
+    <div class="label">Cal Hacks 13.0 · Pitch brief</div>
+    <h1>Look<span class="out">out</span> catches the scam, then asks a human.</h1>
+    <p class="lede">An AI agent that watches an aging parent's bank activity and credit file, connects the dots across events, and responds in proportion. It never moves money.</p>
+    <div class="meta">
+      <span>Microsoft · Built for the Real World</span><span>Hyphenate</span><span>CRS</span><span>Capital One Nessie</span><span>Anthropic</span><span>Best People-First Hack</span>
+    </div>
+    <div class="pitch">
+      <div class="label">Devpost pitch (2–3 sentences)</div>
+      <p>Scams against older adults don't look suspicious one transaction at a time; they look suspicious as a pattern. Lookout watches a parent's accounts and credit file with their consent, spots scam patterns like gift cards bought at three stores in one afternoon or a new credit card on a file that's been quiet for years, and responds in proportion: a gentle check-in with the parent, an alert to family with the evidence, or a recommended hold that a person must approve. It never moves money, and every decision is explained and audited.</p>
+    </div>
+  </header>
+
+  <section>
+    <div class="label">The moment</div>
+    <h2>Saturday afternoon, three stores, $1,500 in gift cards</h2>
+    <p class="col">A caller says he's her grandson and he's in jail. Each purchase on its own looks like ordinary shopping. Together they are the most common scam payment pattern there is. Mom is Dolores, a real CRS sandbox persona: 74, retired, every account closed for years.</p>
+    <div class="receipt" role="table" aria-label="Simulated grandparent scam timeline">
+      <div class="row" role="row"><time>12:39 PM</time><div>Target <div class="memo">Gift cards, bail for grandson</div></div><div class="amt">$500.00</div></div>
+      <div class="row" role="row"><time>1:34 PM</time><div>Walgreens <div class="memo">Google Play gift cards</div></div><div class="amt">$500.00</div></div>
+      <div class="row" role="row"><time>2:29 PM</time><div>Best Buy <div class="memo">Apple gift card</div></div><div class="amt">$500.00</div></div>
+      <div class="row verdict" role="row"><div>Lookout: risk 95% · pattern grandparent emergency · hold recommended, waiting for family approval. Mom gets a check-in on her own screen.</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">What Lookout does</div>
+    <h2>Four tiers, and only a person can approve the top one</h2>
+    <p class="col">Every response goes through one action policy. Below 60% confidence it never goes past a check-in: ask, don't accuse.</p>
+    <div class="ladder">
+      <div class="step log"><span class="name">LOG</span><h3>Audit only</h3><p>Normal life. Groceries, the HOA, a birthday gift card.</p><span class="at">risk &lt; 0.40</span></div>
+      <div class="step check"><span class="name">CHECK_IN</span><h3>Ask Mom, kindly</h3><p>Large-text screen: "Was this you?" with three answers.</p><span class="at">risk ≥ 0.40</span></div>
+      <div class="step alert"><span class="name">ALERT</span><h3>Tell the family</h3><p>Plain-language summary plus the exact events and signals.</p><span class="at">risk ≥ 0.65</span></div>
+      <div class="step hold"><span class="name">RECOMMEND_HOLD</span><h3>Human approves</h3><p>Pause payments, or freeze credit for identity theft. The family does it; Lookout can't.</p><span class="at">risk ≥ 0.85</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">How it works</div>
+    <h2>Rules you can audit, Claude for judgment, a policy in charge</h2>
+    <div class="flow">
+      <div><b>Data</b><span>Nessie bank activity (read-only), CRS credit reports from 3 bureaus plus Fraud Finder, and a labeled scenario injector for the demo.</span></div>
+      <div><b>Rules</b><span>16 transaction rules and 10 identity signals, combined with a noisy-OR so weak signals add up and one strong signal is enough.</span></div>
+      <div><b>Claude</b><span>Names the pattern, writes the family summary and Mom's check-in. Returns JSON through a forced tool call, validated with Pydantic.</span></div>
+      <div><b>Policy + audit</b><span>Picks the tier. Every decision is logged with the events, rule hits, reasoning, confidence and tier.</span></div>
+    </div>
+    <p class="col">Claude can raise the risk but can only lower the rules' score by 0.15 at most, so a strong signal can't be argued away. If Claude fails or returns invalid output, the rules result stands.</p>
+  </section>
+
+  <section>
+    <div class="label">Real vs. simulated</div>
+    <h2>What's live and what we inject</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Piece</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td>Mom's credit baseline</td><td><span class="chip real">Live</span></td><td>CRS sandbox: P20 Dolores Whitcomb, 6 tradelines, 0 open, last new account 84 months ago, Fraud Finder 8/100. Detected as a dormant file.</td></tr>
+        <tr><td>Identity check</td><td><span class="chip real">Live</span></td><td>All 3 bureaus plus Fraud Finder on any of the 20 CRS personas. P13 (synthetic identity) is flagged at 94%.</td></tr>
+        <tr><td>Bank activity</td><td><span class="chip real">Live</span></td><td>Read-only Nessie sync. Lookout never calls an endpoint that moves money.</td></tr>
+        <tr><td>New suspicious events</td><td><span class="chip sim">Simulated</span></td><td>CRS personas never change, so new scam activity comes from the scenario injector. Every injected event is labeled <code>injector</code> on screen.</td></tr>
+        <tr><td>Claude layer</td><td><span class="chip sim">Optional</span></td><td>Turns on with an Anthropic API key. Without it, everything runs on rules alone.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="label">Results</div>
+    <h2>How we know it works, including where it doesn't</h2>
+    <p class="col">The dev set was written alongside the rules, so it's a sanity check. The holdout set was written blind by a separate agent that never saw the rules, and we didn't tune against it. Show the holdout number.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Eval</th><th>Data</th><th>Caught</th><th>False alarms</th><th>Time to detect</th></tr></thead>
+      <tbody>
+        <tr><td>Scam scenarios, dev set</td><td>14 scenarios (8 scam, 6 normal)</td><td class="num">8/8 · 100%</td><td class="num">0/6 · 0%</td><td class="num">median 15 min</td></tr>
+        <tr><td><strong>Scam scenarios, blind holdout</strong></td><td>16 scenarios (8 scam, 8 normal)</td><td class="num"><strong>7/8 · 87.5%</strong></td><td class="num"><strong>2/8 · 25%</strong></td><td class="num">median 8 min</td></tr>
+        <tr><td>Identity check, real CRS data</td><td>All 20 sandbox personas, 3 bureaus each</td><td class="num">4/4 identity cases</td><td class="num">0/16 clean</td><td class="num">-</td></tr>
+      </tbody>
+    </table></div>
+    <div class="two">
+      <div class="box">
+        <h3>Where the rules fall short (holdout)</h3>
+        <ul class="plain">
+          <li><span class="chip miss">Missed</span> Gift cards labeled only "Apple Store", with no "gift card" wording.</li>
+          <li><span class="chip miss">False alarm</span> A car loan on an active credit file: two inquiries and a new account.</li>
+          <li><span class="chip miss">False alarm</span> A $48,250 closing wire to a title company she'd already paid earnest money to.</li>
+          <li>Two normals got a gentle check-in, not an alarm: a $300 wedding gift card and a monthly Western Union to her sister.</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Why that's the right story</h3>
+        <p>Every miss needs context a keyword can't see: a relationship in her history, or the meaning of a merchant. That's the job of the Claude layer, and the next eval to run is the same holdout with Claude on (<code>run_evals --set holdout --llm</code>).</p>
+        <p>The identity check doesn't treat credit quality as fraud: bankruptcy, collections and a low score stay clear, because that's the person's own history.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">Demo script · 5-minute table judging</div>
+    <h2>Two screens side by side: the family dashboard and Mom's tablet</h2>
+    <div class="split">
+      <ol class="script">
+        <li><div><strong>Pull Mom's real file.</strong> Dashboard → "Pull from CRS sandbox", P20. Point at "Dormant", 84 months, identity clear. <div class="t">0:00–0:40 · live CRS</div></div></li>
+        <li><div><strong>Run the scam.</strong> Simulation panel → grandparent bail → Inject, then Assess. Hold recommended at 95%, with the evidence and the three highlighted purchases. <div class="t">0:40–1:40 · labeled as simulated</div></div></li>
+        <li><div><strong>Mom answers.</strong> On her screen she taps "Someone asked me to do this". Her answer appears on the dashboard within 3 seconds. <div class="t">1:40–2:30</div></div></li>
+        <li><div><strong>A person decides.</strong> Approve the hold. Show that Lookout tells the family what to do and never does it itself. Open the audit log. <div class="t">2:30–3:15</div></div></li>
+        <li><div><strong>Identity theft on real data.</strong> Switch persona to P13. Flagged at 94% from an inquiry burst, a 9-day-old email and someone else's phone number. The recommendation becomes a credit freeze. <div class="t">3:15–4:00 · live CRS</div></div></li>
+        <li><div><strong>The numbers.</strong> Blind holdout 87.5% caught, 25% false alarms, with the misses named. Path to production on Azure. <div class="t">4:00–5:00</div></div></li>
+      </ol>
+      <div class="momcard" aria-label="Mom's check-in screen, as shown in the demo">
+        <div class="label">Mom's screen</div>
+        <div class="q">Can you help us check something?</div>
+        <div class="muted" style="font-size:var(--s-2)">$500.00 at Target · Gift cards, bail for grandson</div>
+        <div class="b y">Yes, that was me</div>
+        <div class="b n">No, that wasn't me</div>
+        <div class="b a">Someone asked me to do this</div>
+      </div>
+    </div>
+    <p class="col muted">If the Wi-Fi drops, run with <code>use_llm=false</code>; the scam flow needs no network. Only the CRS pulls do.</p>
+  </section>
+
+  <section>
+    <div class="label">Responsible design</div>
+    <h2>Built for her dignity as much as her money</h2>
+    <div class="two">
+      <div class="box"><h3>Consent and visibility</h3><p>Mom opts in, and her screen shows her the exact activity Lookout is asking about. It never shames, and never asks for passwords, codes or account numbers.</p></div>
+      <div class="box"><h3>Read-only, always</h3><p>No code path creates a transfer, purchase or withdrawal for her. Holds and freezes are recommendations a person approves.</p></div>
+      <div class="box"><h3>Explainable</h3><p>Each decision carries the events, the rule hits with weights, Claude's reasoning, confidence and tier, in an audit log the family can read.</p></div>
+      <div class="box"><h3>Few false alarms</h3><p>Low confidence caps the response at a check-in. Normal life (gifts, travel, the HOA) is part of the eval set on purpose.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="label">Path to production</div>
+    <h2>From hackathon sandbox to something a family uses on Monday</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Today</th><th>Production</th></tr></thead>
+      <tbody>
+        <tr><td>Nessie mock bank</td><td>Plaid (read-only transactions)</td></tr>
+        <tr><td>CRS sandbox personas</td><td>CRS production bureau access, scheduled pulls diffed for new inquiries and accounts</td></tr>
+        <tr><td>One container, in-memory store</td><td>Azure Container Apps (deploy script ready in <code>infra/azure/deploy.sh</code>) + Azure Database for PostgreSQL</td></tr>
+        <tr><td>Keys in environment variables</td><td>Azure Key Vault</td></tr>
+        <tr><td>Audit log in memory</td><td>Azure Monitor and Application Insights</td></tr>
+        <tr><td>Browser check-in screen</td><td>Tablet app and SMS check-ins, with the same three answers</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="label">Why each track</div>
+    <div class="tw"><table>
+      <thead><tr><th>Track</th><th>What we show</th></tr></thead>
+      <tbody>
+        <tr><td>Microsoft · Built for the Real World</td><td>A real community (adult children of aging parents), measured detection and false-alarm rates on a blind set, human-in-the-loop by design, Azure deploy path.</td></tr>
+        <tr><td>Hyphenate · Autonomous finance</td><td>An agent that acts on its own up to a line, then hands off. Clear about what's real and what's simulated.</td></tr>
+        <tr><td>CRS</td><td>CRS is central: Mom's baseline, three-bureau identity check, Fraud Finder, and an eval across all 20 personas on live responses.</td></tr>
+        <tr><td>Capital One Nessie</td><td>Read-only ingest of purchases, transfers and withdrawals, normalized into events.</td></tr>
+        <tr><td>Anthropic</td><td>Claude adds judgment where it matters, with structured output, a bounded influence on risk and a rules fallback.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <div class="label">Before you present</div>
+    <ul class="plain col">
+      <li>Add an Anthropic API key and run the holdout with Claude on, so you can show both numbers.</li>
+      <li>Collect 5+ quotes from people caring for an aging parent (Microsoft checklist).</li>
+      <li>Deploy to Azure with <code>infra/azure/deploy.sh</code> and put the live URL on Devpost.</li>
+      <li>Rotate the Nessie and CRS credentials that were pushed to GitHub in <code>.env.example</code>.</li>
+    </ul>
+  </section>
+
+  <footer>Lookout · Cal Hacks 13.0 · Sandbox data only: CRS test personas and Nessie mock customers. No real people's data is used anywhere.</footer>
+</div>

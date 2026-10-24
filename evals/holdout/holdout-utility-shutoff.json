@@ -1,0 +1,92 @@
+{
+  "id": "holdout-utility-shutoff",
+  "label": "scam",
+  "pattern": "payee_scam",
+  "expected_min_tier": "check_in",
+  "notes": "A caller claiming to be from the power company says her service will be cut off in an hour unless she pays a past-due balance via Cash App.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "new_payee",
+      "offset_minutes": 0,
+      "counterparty": "PGE Billing Svcs",
+      "description": "Cash App recipient added"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 6,
+      "amount": 680.0,
+      "counterparty": "PGE Billing Svcs",
+      "category": "p2p",
+      "description": "Cash App - acct 4471 past due"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 86.42,
+      "offset_minutes": 5,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

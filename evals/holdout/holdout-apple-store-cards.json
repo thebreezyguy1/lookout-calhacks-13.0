@@ -1,0 +1,102 @@
+{
+  "id": "holdout-apple-store-cards",
+  "label": "scam",
+  "pattern": "gift_card_scam",
+  "expected_min_tier": "alert",
+  "notes": "A scammer posing as an IRS agent has her buy Apple gift cards at three stores in one afternoon and read him the codes.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 0,
+      "amount": 500.0,
+      "merchant": "Apple Store",
+      "category": "electronics",
+      "description": "Apple Store"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 55,
+      "amount": 500.0,
+      "merchant": "Apple Store",
+      "category": "electronics",
+      "description": "Apple Store"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 130,
+      "amount": 400.0,
+      "merchant": "Best Buy",
+      "category": "electronics",
+      "description": "BEST BUY 00412"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 86.42,
+      "offset_minutes": 5,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

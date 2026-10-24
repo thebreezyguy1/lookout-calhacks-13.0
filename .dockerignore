@@ -1,0 +1,38 @@
+# Secrets (never in the image). .env.example is excluded too: the app doesn't need it.
+.env
+.env.*
+**/.env
+**/.env.*
+
+# VCS / tooling
+.git
+.gitignore
+.claude
+.idea
+.vscode
+**/.DS_Store
+
+# Python artefacts
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/*.egg-info
+
+# Node
+**/node_modules
+
+# Local data and sandbox API responses
+**/*.local.json
+**/*.db
+**/*.sqlite3
+evals/results
+
+# Not needed at runtime
+infra
+docs
+tracks.md
+# Keep Dockerfile in the context: az acr build reads it from the uploaded source.

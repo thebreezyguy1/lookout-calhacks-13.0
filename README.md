@@ -78,11 +78,29 @@ curl localhost:8000/people/mom/audit
 
 ```bash
 cd backend
-python -m scripts.run_evals          # rules only, offline
-python -m scripts.run_evals --llm    # rules + Claude
+python -m scripts.run_evals                  # dev set, rules only, offline
+python -m scripts.run_evals --set holdout    # blind set, written without seeing the rules
+python -m scripts.run_evals --llm            # rules + Claude (needs ANTHROPIC_API_KEY)
+python -m scripts.run_persona_evals          # identity check on all 20 CRS personas (--live to re-pull)
 ```
 
-Reports detection rate, false-alarm rate, normal check-in rate and median time-to-detect over the labeled scenarios in `evals/scenarios/`.
+Reports detection rate, false-alarm rate, normal check-in rate and median time-to-detect.
+
+| Eval | Caught | False alarms |
+|---|---|---|
+| Dev set (`evals/scenarios/`, 8 scam / 6 normal, written with the rules) | 8/8 | 0/6 |
+| **Blind holdout** (`evals/holdout/`, 8 scam / 8 normal, not tuned against) | **7/8** | **2/8** |
+| Identity check on real CRS responses (20 personas) | 4/4 identity cases | 0/16 clean |
+
+Rules only. The holdout misses need context (a known payee, an active credit file, a merchant name with no "gift card" wording), which is what the Claude layer is for.
+
+## Deploy to Azure
+
+See [docs/deploy-azure.md](docs/deploy-azure.md): one script, `infra/azure/deploy.sh`, builds the image in Azure Container Registry and runs it on Azure Container Apps.
+
+## Presentation
+
+[docs/presentation.html](docs/presentation.html) is the pitch brief: story, real vs. simulated, results, 5-minute demo script and path to production.
 
 ## Responsible design
 

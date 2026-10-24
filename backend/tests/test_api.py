@@ -84,3 +84,37 @@ def test_quiet_window_never_asks_the_parent() -> None:
 def test_frontend_is_served() -> None:
     assert "Family dashboard" in client.get("/app/").text
     assert "Someone asked me to do this" in client.get("/app/mom.html").text
+
+
+class FakeCRS:
+    """Stands in for the CRS sandbox: a quiet file everywhere, deceased at one bureau, risky contact details."""
+
+    def credit_report(self, body, bureau):
+        from app.integrations.crs import CRSError, CRSResponse
+        if bureau == "equifax":
+            raise CRSError("E1200: deceased file", ["E1200"])
+        return CRSResponse(body={"tradelines": [{"accountOpenedDate": "1998-05-01",
+                                                 "accountStatusType": "Closed"}]}, request_id="r1")
+
+    def fraud_finder(self, body):
+        from app.integrations.crs import CRSResponse
+        return CRSResponse(body={"risk": {"score": 88}}, request_id="r2")
+
+
+def test_baseline_runs_identity_check_through_policy(monkeypatch) -> None:
+    import app.main as main
+    monkeypatch.setattr(main, "CRSClient", FakeCRS)
+    b = client.post("/people/mom/baseline", params={"persona": "P14"}).json()
+    assert b["identity_level"] == "flag" and b["dormant_file"] is True
+    assert {"deceased_identity", "fraud_finder_high"} <= {h["rule"] for h in b["identity_signals"]}
+
+    decision = client.get("/people/mom/decisions").json()[0]
+    assert decision["assessment"]["pattern"] == "identity_theft"
+    assert decision["tier"] == "recommend_hold" and decision["requires_approval"] is True
+    actions = [r["action"] for r in client.get("/people/mom/audit").json()]
+    assert actions == ["baseline_built", "assessed"]
+
+
+def test_personas_are_listed() -> None:
+    ids = [p["id"] for p in client.get("/personas").json()]
+    assert len(ids) == 20 and "P20" in ids

@@ -1,0 +1,94 @@
+{
+  "id": "holdout-new-card-no-memo",
+  "label": "scam",
+  "pattern": "identity_theft",
+  "expected_min_tier": "alert",
+  "notes": "Someone with her stolen details applies for and opens a store credit card in her name; she has not applied for credit in years.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "credit_inquiry",
+      "offset_minutes": 0,
+      "counterparty": "Synchrony Bank"
+    },
+    {
+      "kind": "credit_inquiry",
+      "offset_minutes": 20,
+      "counterparty": "Comenity Bank"
+    },
+    {
+      "kind": "new_credit_account",
+      "offset_minutes": 1440,
+      "counterparty": "Synchrony Bank",
+      "category": "credit card"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 86.42,
+      "offset_minutes": 5,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

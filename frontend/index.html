@@ -74,6 +74,11 @@
   .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
   .pill.on { background: var(--check-bg); color: var(--check); }
   .pill.off { background: var(--ok-bg); color: var(--ok); }
+  .pill.flag { background: var(--hold-bg); color: var(--hold); }
+  .pill.watch { background: var(--check-bg); color: var(--check); }
+  .persona { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 10px; }
+  .idsig { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+  .idsig li::before { content: "• "; color: var(--alert); }
   .sim { border-style: dashed; }
   .sim select { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); margin-bottom: 10px; }
   .sim .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -106,7 +111,7 @@
 
       <section class="card approval" id="approval" hidden>
         <h2>Your approval is needed</h2>
-        <p style="margin:0">Lookout recommends pausing outgoing payments on Mom's account. <strong>Lookout never moves money or places holds itself.</strong> If you approve, call her bank's fraud line (the number on the back of her card) and ask them to pause outgoing payments.</p>
+        <p style="margin:0" id="approvalText"></p>
         <div class="row">
           <input id="reviewer" placeholder="Your name" value="daughter" aria-label="Your name">
           <button class="btn primary" id="approveBtn">Approve hold</button>
@@ -135,7 +140,8 @@
       <section class="card">
         <h2>Mom's credit file (CRS)</h2>
         <div id="baseline"><div class="empty">No baseline yet.</div></div>
-        <button class="btn" id="baselineBtn">Pull from CRS sandbox (P20)</button>
+        <select id="persona" aria-label="CRS test persona" class="persona"></select>
+        <button class="btn" id="baselineBtn">Pull from CRS sandbox</button>
         <div class="error" id="baselineError" hidden></div>
       </section>
 

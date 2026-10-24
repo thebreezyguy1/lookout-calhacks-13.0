@@ -1,0 +1,85 @@
+{
+  "id": "holdout-church-pledge",
+  "label": "normal",
+  "notes": "She pays her annual building-fund pledge to her parish, where she gives a small amount every week.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "transfer",
+      "offset_minutes": 0,
+      "amount": 2500.0,
+      "counterparty": "St. Brigid Parish",
+      "category": "charity",
+      "description": "Building fund pledge 2026"
+    }
+  ],
+  "history": [
+    {
+      "kind": "transfer",
+      "offset_minutes": 7,
+      "amount": 50.0,
+      "counterparty": "St. Brigid Parish",
+      "category": "charity",
+      "description": "Weekly offering"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 14,
+      "amount": 50.0,
+      "counterparty": "St. Brigid Parish",
+      "category": "charity",
+      "description": "Weekly offering"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 21,
+      "amount": 50.0,
+      "counterparty": "St. Brigid Parish",
+      "category": "charity",
+      "description": "Weekly offering"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

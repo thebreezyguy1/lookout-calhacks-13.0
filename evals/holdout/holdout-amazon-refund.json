@@ -1,0 +1,108 @@
+{
+  "id": "holdout-amazon-refund",
+  "label": "scam",
+  "pattern": "tech_support_scam",
+  "expected_min_tier": "alert",
+  "notes": "A pop-up 'Amazon support' agent remotes into her PC, fakes an over-refund, and has her send the 'excess' back by Zelle and then in Target gift cards.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "new_payee",
+      "offset_minutes": 0,
+      "counterparty": "Kevin Morales",
+      "description": "Zelle recipient added"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 8,
+      "amount": 1950.0,
+      "counterparty": "Kevin Morales",
+      "category": "p2p",
+      "description": "Zelle - return overpayment"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 140,
+      "amount": 500.0,
+      "merchant": "Target",
+      "category": "general merchandise",
+      "description": "TARGET T-2145"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 175,
+      "amount": 500.0,
+      "merchant": "Target",
+      "category": "general merchandise",
+      "description": "TARGET T-0871"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Amazon.com",
+      "amount": 34.99,
+      "offset_minutes": 12,
+      "category": "online shopping"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

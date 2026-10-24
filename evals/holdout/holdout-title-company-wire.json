@@ -1,0 +1,91 @@
+{
+  "id": "holdout-title-company-wire",
+  "label": "normal",
+  "notes": "She wires closing funds to the title company for the condo she is buying after selling her house, with the escrow number from her paperwork.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "new_payee",
+      "offset_minutes": 0,
+      "counterparty": "Fidelity National Title",
+      "description": "Wire beneficiary added"
+    },
+    {
+      "kind": "transfer",
+      "offset_minutes": 25,
+      "amount": 48250.0,
+      "counterparty": "Fidelity National Title",
+      "category": "wire",
+      "description": "Escrow 26-08812 closing funds"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Fidelity National Title",
+      "amount": 5000.0,
+      "offset_minutes": 30,
+      "category": "real estate",
+      "description": "Earnest money deposit"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}

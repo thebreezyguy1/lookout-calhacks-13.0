@@ -10,10 +10,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.agent.baseline import build_baseline
+from app.agent.identity import identity_level, identity_signals
 from app.agent.policy import decide
-from app.agent.risk import assess
+from app.agent.risk import assess, assess_identity
 from app.config import settings
-from app.integrations.crs import CRSClient, CRSError, load_personas
+from app.integrations.crs import CREDIT_REPORT_PATHS, CRSClient, CRSError, load_personas
 from app.integrations.nessie_events import fetch_events
 from app.models import Baseline, Decision, Event, EventKind, EventSource, ParentAnswer, Tier
 from app.scenarios import load_scenario, load_scenarios, to_events
@@ -41,20 +42,38 @@ def health() -> dict[str, str]:
 
 # ---------- Baseline (real CRS data) ----------
 
+@app.get("/personas")
+def personas() -> list[dict]:
+    """CRS sandbox test personas (synthetic people), for the dashboard's persona picker."""
+    return [{"id": pid, "name": p["name"], "profile": p["profile"]} for pid, p in load_personas().items()]
+
+
 @app.post("/people/{person_id}/baseline", response_model=Baseline)
 def pull_baseline(person_id: str, persona: str = "P20", bureau: str = "experian") -> Baseline:
-    """Pull the person's credit report and Fraud Finder check from the CRS sandbox."""
-    personas = load_personas()
-    if persona not in personas:
+    """Pull the person's credit reports (all three bureaus) and Fraud Finder check from the CRS sandbox.
+
+    `bureau` is the file the baseline is built from; all three feed the identity check.
+    The identity result goes through the action policy like any other assessment.
+    """
+    all_personas = load_personas()
+    if persona not in all_personas:
         raise HTTPException(404, f"Unknown persona {persona}")
-    p = personas[persona]
+    if bureau not in CREDIT_REPORT_PATHS:
+        raise HTTPException(400, f"Unknown bureau {bureau}")
+    p = all_personas[persona]
     client = CRSClient()
-    report, fraud, errors, request_ids = None, None, [], []
-    try:
-        r = client.credit_report(p["credit_report"][bureau]["body"], bureau)
-        report, request_ids = r.body, [r.request_id] if r.request_id else []
-    except CRSError as exc:
-        errors.append(str(exc))
+    reports: dict[str, dict] = {}
+    bureau_errors: dict[str, str] = {}
+    fraud, request_ids = None, []
+    for b in CREDIT_REPORT_PATHS:
+        try:
+            r = client.credit_report(p["credit_report"][b]["body"], b)
+            reports[b] = r.body
+            if r.request_id:
+                request_ids.append(r.request_id)
+        except CRSError as exc:
+            bureau_errors[b] = str(exc)
+    errors = [f"{b}: {msg}" for b, msg in bureau_errors.items()]
     try:
         f = client.fraud_finder(p["fraud_finder"]["body"])
         fraud = f.body
@@ -63,11 +82,26 @@ def pull_baseline(person_id: str, persona: str = "P20", bureau: str = "experian"
     except Exception as exc:  # noqa: BLE001 - fraud check is additive
         errors.append(f"fraud_finder: {exc}")
 
-    baseline = build_baseline(person_id, report, fraud, persona_id=persona, name=p["name"],
+    hits = identity_signals(reports, bureau_errors, fraud)
+    score, level = identity_level(hits)
+    primary = reports.get(bureau) or next(iter(reports.values()), None)
+    baseline = build_baseline(person_id, primary, fraud, persona_id=persona, name=p["name"],
                               bureau_errors=errors, request_ids=request_ids)
+    baseline = baseline.model_copy(update={"identity_score": score, "identity_level": level,
+                                           "identity_signals": hits})
     store.baselines[person_id] = baseline
     store.log(person_id, "baseline_built", persona=persona, bureau=bureau,
-              dormant=baseline.dormant_file, errors=errors, request_ids=request_ids)
+              dormant=baseline.dormant_file, identity_level=level, identity_score=score,
+              errors=errors, request_ids=request_ids)
+
+    if hits:
+        assessment = assess_identity(person_id, hits)
+        decision = decide(assessment)
+        store.decisions[decision.id] = decision
+        store.log(person_id, "assessed", decision_id=decision.id, tier=decision.tier.value,
+                  risk=assessment.risk_score, confidence=assessment.confidence,
+                  pattern=assessment.pattern, rules=assessment.rule_hits, engine=assessment.engine,
+                  events=0, kind="identity")
     return baseline
 
 

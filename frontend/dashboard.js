@@ -69,10 +69,21 @@ function renderStatus(d) {
     ${a.reasoning && a.reasoning !== a.family_summary ? `<div class="reasoning">${esc(a.reasoning)}</div>` : ""}`;
 }
 
+// What the family does after approving. Lookout itself never moves money, holds or freezes anything.
+function nextStep(d) {
+  return d.assessment.pattern === "identity_theft"
+    ? "place a credit freeze for Mom at Equifax, Experian and TransUnion, and report identity theft at IdentityTheft.gov"
+    : "call Mom's bank fraud line (the number on the back of her card) and ask them to pause outgoing payments";
+}
+
 function renderApproval(d) {
   const box = $("approval");
   if (!d || !d.requires_approval) { box.hidden = true; return; }
   box.hidden = false;
+  const identity = d.assessment.pattern === "identity_theft";
+  $("approveBtn").textContent = identity ? "Approve freeze" : "Approve hold";
+  $("approvalText").innerHTML = `Lookout recommends ${identity ? "freezing Mom's credit" : "pausing outgoing payments on Mom's account"}. `
+    + `<strong>Lookout never moves money, places holds or freezes anything itself.</strong> If you approve, ${esc(nextStep(d))}.`;
   const done = d.approved !== null;
   $("approveBtn").hidden = $("rejectBtn").hidden = $("reviewer").hidden = done;
   let note = box.querySelector(".note");
@@ -81,7 +92,7 @@ function renderApproval(d) {
     note.className = `note ${d.approved ? "bad" : "ok"}`;
     note.style.marginTop = "12px";
     note.textContent = d.approved
-      ? `Approved by ${d.reviewed_by}. Next step: call Mom's bank fraud line and ask them to pause outgoing payments.`
+      ? `Approved by ${d.reviewed_by}. Next step: ${nextStep(d)}.`
       : `Rejected by ${d.reviewed_by}. No hold recommended.`;
   } else if (note) {
     note.remove();
@@ -139,7 +150,9 @@ function renderBaseline(b) {
       <dt>Inquiries (24 mo)</dt><dd>${b.inquiries_last_24m}</dd>
       <dt>Score</dt><dd>${b.score ?? "None (stale file)"}</dd>
       <dt>Fraud Finder</dt><dd>${b.fraud_score == null ? "-" : `${b.fraud_score} / 100`}</dd>
+      <dt>Identity check</dt><dd><span class="pill ${b.identity_level === "clear" ? "off" : b.identity_level}">${esc(b.identity_level)}</span> ${pct(b.identity_score)}</dd>
     </dl>
+    ${b.identity_signals.length ? `<ul class="idsig">${b.identity_signals.map((s) => `<li>${esc(s.detail)}</li>`).join("")}</ul>` : ""}
     ${b.dormant_file ? `<p class="small muted" style="margin-top:0">Any new credit on a dormant file is a strong identity-theft signal.</p>` : ""}
     ${b.bureau_errors.length ? `<div class="error">${b.bureau_errors.map(esc).join("<br>")}</div>` : ""}`;
 }
@@ -153,10 +166,12 @@ function renderHistory(decisions, selectedId) {
 }
 
 const AUDIT_LABEL = {
-  baseline_built: (x) => `Baseline pulled from CRS (${x.persona}, ${x.bureau})${x.dormant ? ", dormant file" : ""}`,
+  baseline_built: (x) => `Baseline pulled from CRS (${x.persona}, 3 bureaus + Fraud Finder)${x.dormant ? ", dormant file" : ""}, identity ${x.identity_level ?? "clear"}`,
   scenario_injected: (x) => `Simulated scenario: ${x.scenario} (${x.events} events)`,
   nessie_synced: (x) => `Nessie sync: ${x.new_events} new events`,
-  assessed: (x) => `Assessed ${x.events} events → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)}, ${x.engine})`,
+  assessed: (x) => x.kind === "identity"
+    ? `Identity check on credit file → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)})`
+    : `Assessed ${x.events} events → ${TIER_LABEL[x.tier]} (risk ${pct(x.risk)}, ${x.engine})`,
   approved: (x) => `Hold approved by ${x.reviewer}`,
   rejected: (x) => `Hold rejected by ${x.reviewer}`,
   parent_responded: (x) => `Mom answered: ${nice(x.answer)}`,
@@ -200,9 +215,15 @@ async function loadScenarios() {
 
 // ---------- actions ----------
 
+async function loadPersonas() {
+  const personas = await api("/personas");
+  $("persona").innerHTML = personas.map((p) =>
+    `<option value="${esc(p.id)}"${p.id === "P20" ? " selected" : ""}>${esc(p.id)} · ${esc(p.profile)}${p.id === "P20" ? " (Mom)" : ""}</option>`).join("");
+}
+
 $("baselineBtn").onclick = (ev) => busy(ev.currentTarget, async () => {
   showError("baselineError", null);
-  try { await api(`/people/${PERSON}/baseline?persona=P20`, { method: "POST" }); await refresh(); }
+  try { await api(`/people/${PERSON}/baseline?persona=${encodeURIComponent($("persona").value)}`, { method: "POST" }); await refresh(); }
   catch (e) { showError("baselineError", e); }
 });
 
@@ -240,6 +261,7 @@ $("approveBtn").onclick = (ev) => review(true, ev.currentTarget);
 $("rejectBtn").onclick = (ev) => review(false, ev.currentTarget);
 
 loadScenarios().catch((e) => showError("simError", e));
+loadPersonas().catch((e) => showError("baselineError", e));
 refresh().catch((e) => showError("simError", e));
 // Poll so Mom's answer from her own screen shows up here live.
 setInterval(() => refresh().catch(() => {}), 3000);

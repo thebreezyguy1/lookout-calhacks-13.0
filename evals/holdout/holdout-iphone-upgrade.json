@@ -1,0 +1,101 @@
+{
+  "id": "holdout-iphone-upgrade",
+  "label": "normal",
+  "notes": "Her old phone died, so she buys a new iPhone and AppleCare at the Apple Store and adds it to her Verizon plan.",
+  "dormant_file": true,
+  "events": [
+    {
+      "kind": "purchase",
+      "offset_minutes": 0,
+      "amount": 829.0,
+      "merchant": "Apple Store",
+      "category": "electronics",
+      "description": "iPhone 16 128GB"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 1,
+      "amount": 79.0,
+      "merchant": "Apple Store",
+      "category": "electronics",
+      "description": "AppleCare+"
+    },
+    {
+      "kind": "purchase",
+      "offset_minutes": 90,
+      "amount": 35.0,
+      "merchant": "Verizon",
+      "category": "telecom",
+      "description": "Device activation fee"
+    }
+  ],
+  "history": [
+    {
+      "kind": "purchase",
+      "merchant": "CVS Pharmacy",
+      "amount": 23.17,
+      "offset_minutes": 9,
+      "category": "pharmacy",
+      "description": "Prescription copay"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "PG&E",
+      "amount": 118.6,
+      "offset_minutes": 14,
+      "category": "utilities",
+      "description": "Monthly electric bill"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 74.09,
+      "offset_minutes": 19,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Verizon",
+      "amount": 65.0,
+      "offset_minutes": 21,
+      "category": "telecom",
+      "description": "Monthly wireless"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Comcast",
+      "amount": 89.99,
+      "offset_minutes": 24,
+      "category": "utilities",
+      "description": "Internet and cable"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Olive Garden",
+      "amount": 38.5,
+      "offset_minutes": 31,
+      "category": "restaurant"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Walgreens",
+      "amount": 15.48,
+      "offset_minutes": 40,
+      "category": "pharmacy"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Safeway",
+      "amount": 92.31,
+      "offset_minutes": 47,
+      "category": "grocery"
+    },
+    {
+      "kind": "purchase",
+      "merchant": "Ace Hardware",
+      "amount": 27.89,
+      "offset_minutes": 55,
+      "category": "home improvement"
+    }
+  ]
+}
